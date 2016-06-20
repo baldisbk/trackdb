@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>TrackDB</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="pics.qrc">
+    <normaloff>:/pics/storage.png</normaloff>:/pics/storage.png</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,0,1">
     <property name="spacing">
@@ -221,38 +225,6 @@
          </widget>
         </widget>
        </item>
-       <item>
-        <layout class="QHBoxLayout" name="buttonLayout">
-         <item>
-          <widget class="QPushButton" name="saveButton">
-           <property name="text">
-            <string>Save</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="printButton">
-           <property name="text">
-            <string>Print</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="playButton">
-           <property name="text">
-            <string>Play +</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="playMinusButton">
-           <property name="text">
-            <string>Play -</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
       </layout>
      </widget>
     </item>
@@ -275,15 +247,145 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionAddFolder"/>
+   <addaction name="actionImport"/>
+   <addaction name="actionExport"/>
+   <addaction name="separator"/>
+   <addaction name="actionFilterFilesOnly"/>
+   <addaction name="actionFilterInfoOnly"/>
+   <addaction name="actionFilterFullInfo"/>
+   <addaction name="separator"/>
+   <addaction name="actionNewTrack"/>
+   <addaction name="actionSaveTrack"/>
+   <addaction name="actionPlayTrack"/>
+   <addaction name="actionPlayTrackMinus"/>
+   <addaction name="actionPrint"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionAddFolder">
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/storage.png</normaloff>:/pics/storage.png</iconset>
+   </property>
    <property name="text">
-    <string>Add folder</string>
+    <string>Add music storage</string>
+   </property>
+   <property name="toolTip">
+    <string>Add folder for music fiules</string>
+   </property>
+  </action>
+  <action name="actionNewTrack">
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/new.png</normaloff>:/pics/new.png</iconset>
+   </property>
+   <property name="text">
+    <string>New track</string>
+   </property>
+  </action>
+  <action name="actionFilterFilesOnly">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/hastrack.png</normaloff>:/pics/hastrack.png</iconset>
+   </property>
+   <property name="text">
+    <string>Filter - files only</string>
+   </property>
+   <property name="toolTip">
+    <string>Show tracks with no info</string>
+   </property>
+  </action>
+  <action name="actionFilterInfoOnly">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/hasinfo.png</normaloff>:/pics/hasinfo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Filter - info only</string>
+   </property>
+   <property name="toolTip">
+    <string>Show tracks with no files added</string>
+   </property>
+  </action>
+  <action name="actionFilterFullInfo">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/nominus.png</normaloff>:/pics/nominus.png</iconset>
+   </property>
+   <property name="text">
+    <string>Filter - full info</string>
+   </property>
+   <property name="toolTip">
+    <string>Show track with info and files</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/import.png</normaloff>:/pics/import.png</iconset>
+   </property>
+   <property name="text">
+    <string>Import database</string>
+   </property>
+  </action>
+  <action name="actionExport">
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/save.png</normaloff>:/pics/save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Export</string>
+   </property>
+  </action>
+  <action name="actionSaveTrack">
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/save.png</normaloff>:/pics/save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save track</string>
+   </property>
+  </action>
+  <action name="actionPrint">
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/print.png</normaloff>:/pics/print.png</iconset>
+   </property>
+   <property name="text">
+    <string>Print</string>
+   </property>
+  </action>
+  <action name="actionPlayTrack">
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/play.png</normaloff>:/pics/play.png</iconset>
+   </property>
+   <property name="text">
+    <string>Play track</string>
+   </property>
+  </action>
+  <action name="actionPlayTrackMinus">
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/playminus.png</normaloff>:/pics/playminus.png</iconset>
+   </property>
+   <property name="text">
+    <string>Play track minus</string>
    </property>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="pics.qrc"/>
+ </resources>
  <connections/>
 </ui>

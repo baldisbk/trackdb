@@ -2,6 +2,7 @@
 
 #include <QColor>
 #include <QDir>
+#include <QIcon>
 
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -41,9 +42,9 @@ int TracksModel::columnCount(const QModelIndex &/*parent*/) const
 
 QVariant TracksModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-	if (role != Qt::DisplayRole)
-		return QVariant();
 	if (orientation == Qt::Vertical)
+		return QVariant();
+	if (role != Qt::DisplayRole)
 		return QVariant();
 	switch (section) {
 	case idColumn: return tr("#");
@@ -121,8 +122,10 @@ bool TracksModel::addFile(QString file)
 		mSelectedTrack->addFile(f);
 	} else {
 		File* f = mFiles[mFileIds[file]];
-		if (f->track() >= 0)
-			mTracks[f->track()]->removeFile(f);
+		// TODO do this in saveRecord()
+		// and setting proper trackId too!
+		//if (f->track() >= 0)
+		//	mTracks[f->track()]->removeFile(f);
 		mSelectedTrack->addFile(f);
 	}
 	return true;
@@ -170,7 +173,7 @@ bool TracksModel::addTag(QString tag)
 	} else {
 		Tag* t = new Tag;
 		t->name = tag;
-		// TODO insert to database
+		// TODO SQL insert to database
 		mTags[tag] = t;
 		mCatTags[QString()].append(tag);
 		emit tagsChanged();
@@ -222,6 +225,10 @@ QVariant TracksModel::data(const QModelIndex &index, int role) const
 		return QVariant();
 	Record* rec = recordForIndex(index);
 	switch (role) {
+	case Qt::UserRole:
+		if (index.column() == stateColumn)
+			return int(rec->fill());
+		break;
 	case Qt::DisplayRole:
 		switch (index.column()) {
 		case idColumn: if (rec->id() > 0) return rec->id(); else return "---";
@@ -242,16 +249,6 @@ QVariant TracksModel::data(const QModelIndex &index, int role) const
 		case artistColumn: return rec->artist;
 		case albumColumn: return rec->album;
 		case tagsColumn: return rec->tags().join(", ");
-		case stateColumn:
-			switch (rec->fill()) {
-			case fullState: return "ITM";
-			case noInfoState: return "_TM";
-			case noFileState: return "I__";
-			case noMinusState: return "IT_";
-			case oneFileState: return "_T_";
-			default:;
-			}
-			break;
 		default: {
 			if (index.column() < columnNumber)
 				break;
@@ -279,10 +276,29 @@ QVariant TracksModel::data(const QModelIndex &index, int role) const
 		case noFileState:
 			return QColor(Qt::lightGray);
 		case noMinusState:
-			return QColor(Qt::green);
+			return QColor(Qt::darkGray);
 		default:;
 		}
 		break;
+	case Qt::DecorationRole:
+		if (index.column() == stateColumn)
+			switch (rec->fill()) {
+			case fullState: return QIcon(":/pics/hasall.png");
+			case noInfoState: return QIcon(":/pics/noinfo.png");
+			case noFileState: return QIcon(":/pics/hasinfo.png");
+			case noMinusState: return QIcon(":/pics/nominus.png");
+			case oneFileState: return QIcon(":/pics/hastrack.png");
+			default:;
+			}
+		break;
+	case Qt::SizeHintRole:
+		switch (index.column()) {
+		case idColumn:
+		case stateColumn:
+			return QSize(1, 1);
+		default:
+			return QVariant();
+		}
 	default:;
 	}
 	return QVariant();
@@ -499,12 +515,28 @@ void TracksModel::saveRecord()
 {
 	if (!mSelectedTrack || !mSelectedTrack->mChanged)
 		return;
+	// TODO SQL save record
 }
 
 void TracksModel::revertRecord()
 {
 	if (!mSelectedTrack || !mSelectedTrack->mChanged)
 		return;
+	// TODO
+}
+
+void TracksModel::newRecord()
+{
+	// TODO
+}
+
+void TracksModel::playFile(const QString &file)
+{
+	File* f = fileForName(file);
+	if (f) {
+		f->lastPlayed = QDateTime::currentDateTime();
+		// TODO SQL save play time
+	}
 }
 
 File *TracksModel::readFile(QString filename)

@@ -33,3 +33,6 @@ FORMS    += mainwindow.ui
 
 DISTFILES += \
     schema.sql
+
+RESOURCES += \
+    pics.qrc

@@ -57,9 +57,20 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(mTracks, SIGNAL(dbChanged()), this, SLOT(onDBChanged()));
 	connect(mTracks, SIGNAL(tagsChanged()), this, SLOT(onTagsChanged()));
 
-	connect(ui->saveButton, SIGNAL(clicked(bool)), mTracks, SLOT(saveRecord()));
-	connect(ui->playButton, SIGNAL(clicked(bool)), this, SLOT(onPlayPlus()));
-	connect(ui->playMinusButton, SIGNAL(clicked(bool)), this, SLOT(onPlayMinus()));
+	connect(ui->actionSaveTrack, SIGNAL(triggered(bool)), mTracks, SLOT(saveRecord()));
+	connect(ui->actionNewTrack, SIGNAL(triggered(bool)), mTracks, SLOT(newRecord()));
+//	connect(ui->actionUndoTrack, SIGNAL(clicked(bool)), mTracks, SLOT(undoRecord()));
+	connect(ui->actionPlayTrack, SIGNAL(triggered(bool)), this, SLOT(onPlayPlus()));
+	connect(ui->actionPlayTrackMinus, SIGNAL(triggered(bool)), this, SLOT(onPlayMinus()));
+	connect(ui->actionAddFolder, SIGNAL(triggered(bool)), this, SLOT(onSetStorage()));
+	connect(ui->actionExport, SIGNAL(triggered(bool)), this, SLOT(onExport()));
+	connect(ui->actionImport, SIGNAL(triggered(bool)), this, SLOT(onImport()));
+
+	connect(ui->actionFilterFilesOnly, SIGNAL(toggled(bool)), this, SLOT(onFFilter(bool)));
+	connect(ui->actionFilterFullInfo, SIGNAL(toggled(bool)), this, SLOT(onIFFilter(bool)));
+	connect(ui->actionFilterInfoOnly, SIGNAL(toggled(bool)), this, SLOT(onIFilter(bool)));
+	ui->actionFilterFullInfo->setChecked(true);
+
 	connect(ui->addTagButton, SIGNAL(clicked(bool)), this, SLOT(onAddTag()));
 	connect(ui->removeTagButton, SIGNAL(clicked(bool)), this, SLOT(onRemoveTag()));
 
@@ -217,6 +228,43 @@ void MainWindow::onRemoveTag()
 	mTags->onRecordChanged(mSelected);
 }
 
+void MainWindow::onSetStorage()
+{
+	// TODO
+}
+
+void MainWindow::onImport()
+{
+	// TODO
+}
+
+void MainWindow::onExport()
+{
+	// TODO
+}
+
+void MainWindow::onPrint()
+{
+	// TODO
+}
+
+void MainWindow::onIFilter(bool on)
+{
+	mFilter->setStateFilter(noFileState, on);
+}
+
+void MainWindow::onFFilter(bool on)
+{
+	mFilter->setStateFilter(noInfoState, on);
+	mFilter->setStateFilter(oneFileState, on);
+}
+
+void MainWindow::onIFFilter(bool on)
+{
+	mFilter->setStateFilter(noMinusState, on);
+	mFilter->setStateFilter(fullState, on);
+}
+
 void MainWindow::onBigPropertyEdited()
 {
 	if (!mSelected)
@@ -231,8 +279,7 @@ void MainWindow::play(QString file)
 {
 	QUrl url = QUrl::fromLocalFile(file);
 	QDesktopServices::openUrl(url);
-	File* f = mTracks->fileForName(file);
-	if (f) f->lastPlayed = QDateTime::currentDateTime();
+	mTracks->playFile(file);
 }
 
 void MainWindow::onProgressInit(int range, QString label)

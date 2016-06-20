@@ -69,6 +69,9 @@ public slots:
 	void selectRecord(const QModelIndex& index);
 	void saveRecord();
 	void revertRecord();
+	void newRecord();
+
+	void playFile(const QString& file);
 
 signals:
 	void message(QString msg);

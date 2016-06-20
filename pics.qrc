@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>pics/hasall.png</file>
+        <file>pics/hasinfo.png</file>
+        <file>pics/hastrack.png</file>
+        <file>pics/hastrackblue.png</file>
+        <file>pics/hastrackgreen.png</file>
+        <file>pics/import.png</file>
+        <file>pics/new.png</file>
+        <file>pics/noinfo.png</file>
+        <file>pics/nominus.png</file>
+        <file>pics/play.png</file>
+        <file>pics/playminus.png</file>
+        <file>pics/print.png</file>
+        <file>pics/save.png</file>
+        <file>pics/storage.png</file>
+    </qresource>
+</RCC>

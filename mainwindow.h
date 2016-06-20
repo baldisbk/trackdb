@@ -45,11 +45,21 @@ private slots:
 	void onFilterSelected();
 	void onFilterChanged();
 	void onTrackSelected(QModelIndex index);
+	void onBigPropertyEdited();
+
+	// action slots
 	void onPlayPlus();
 	void onPlayMinus();
 	void onAddTag();
 	void onRemoveTag();
-	void onBigPropertyEdited();
+	void onSetStorage();
+	void onImport();
+	void onExport();
+	void onPrint();
+
+	void onIFilter(bool on);
+	void onFFilter(bool on);
+	void onIFFilter(bool on);
 
 	void play(QString file);
 
