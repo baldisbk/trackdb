@@ -75,7 +75,7 @@ bool TracksModel::isValidIndex(const QModelIndex &index) const
 Record *TracksModel::recordForIndex(const QModelIndex &index) const
 {
 	if (isValidIndex(index))
-		return mTracks[mTrackIds[index.row()]];
+		return mTracks.value(mTrackIds[index.row()], NULL);
 	else
 		return NULL;
 }
@@ -368,7 +368,6 @@ void TracksModel::loadDB()
 		trc->album = qSelectTracks.value(3).toString();
 		trc->lastChanged = qSelectTracks.value(4).toDateTime();
 		trc->mFill = noFileState;
-
 		mTracks[trc->id()] = trc;
 		mTrackIds.append(trc->id());
 	}
@@ -506,28 +505,84 @@ void TracksModel::scanPath(const QString &path)
 
 void TracksModel::selectRecord(const QModelIndex &index)
 {
-	Record* newrec = recordForIndex(index);
+	// TODO ask for changes
+	Record* newrec = new Record;
+	Record* origin = recordForIndex(index);
+	*newrec = *origin;
 	emit recordSelected(newrec);
+	if (mSelectedTrack)
+		delete mSelectedTrack;
 	mSelectedTrack = newrec;
 }
 
 void TracksModel::saveRecord()
 {
-	if (!mSelectedTrack || !mSelectedTrack->mChanged)
+	if (!mSelectedTrack)
 		return;
-	// TODO SQL save record
+	Record* origin = mTracks.value(mSelectedTrack->id(), NULL);
+	if (!origin) {
+		int id = mTrackIds.size();
+		// TODO SQL insert
+		// id = lastInsertId
+		beginInsertRows(QModelIndex(), mTrackIds.size(), mTrackIds.size());
+		Record* newrec = new Record;
+		mTracks[id] = newrec;
+		mSelectedTrack->mId = id;
+		*newrec = *mSelectedTrack;
+		mTrackIds.append(id);
+		endInsertRows();
+	} else {
+		if (origin->id() < 0) {
+			int id = mTrackIds.size();
+			// TODO SQL insert
+			// id = lastInsertId
+			// TODO change id in mTrackIds, not append/remove
+			mTracks.remove(origin->id());
+			Record* newrec = new Record;
+			mTracks[id] = newrec;
+			mSelectedTrack->mId = id;
+			*newrec = *mSelectedTrack;
+			int ind = mTrackIds.indexOf(origin->id());
+			if (ind < 0) {
+				beginInsertRows(QModelIndex(), mTrackIds.size(), mTrackIds.size());
+				mTrackIds.append(id);
+				endInsertRows();
+			} else {
+				mTrackIds[ind] = id;
+				emit dataChanged(index(ind, 0), index(ind, columnCount()-1));
+			}
+			delete origin;
+		} else {
+			// TODO SQL update
+			int ind = mTrackIds.indexOf(origin->id());
+			*origin = *mSelectedTrack;
+			emit dataChanged(index(ind, 0), index(ind, columnCount()-1));
+		}
+	}
 }
 
 void TracksModel::revertRecord()
 {
-	if (!mSelectedTrack || !mSelectedTrack->mChanged)
+	if (!mSelectedTrack)
 		return;
-	// TODO
+	if (!mTracks.contains(mSelectedTrack->id())) {
+		delete mSelectedTrack;
+		mSelectedTrack = NULL;
+	} else {
+		Record* origin = mTracks[mSelectedTrack->id()];
+		*mSelectedTrack = *origin;
+	}
+	emit recordSelected(mSelectedTrack);
 }
 
 void TracksModel::newRecord()
 {
-	// TODO
+	// TODO ask for changes
+	Record* newrec = new Record;
+	emit recordSelected(newrec);
+	if (mSelectedTrack)
+		delete mSelectedTrack;
+	mSelectedTrack = newrec;
 }
 
 void TracksModel::playFile(const QString &file)

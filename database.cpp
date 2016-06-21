@@ -2,7 +2,7 @@
 
 #include <QDebug>
 
-Record::Record(): mFill(noFileState), mId(-1), mChanged(false) {}
+Record::Record(): mFill(noFileState), mId(0), mChanged(false) {}
 
 Record::Record(File *file, int id)
 {
