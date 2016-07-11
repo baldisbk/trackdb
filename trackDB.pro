@@ -19,7 +19,10 @@ SOURCES += main.cpp\
     database.cpp \
     propertymodel.cpp \
     tagsmodel.cpp \
-    filtermodel.cpp
+    filtermodel.cpp \
+    checklistcombobox.cpp \
+    checklistmodel.cpp \
+    combocheckboxdelegate.cpp
 
 HEADERS  += mainwindow.h \
     tracksmodel.h \
@@ -27,7 +30,10 @@ HEADERS  += mainwindow.h \
     database.h \
     propertymodel.h \
     tagsmodel.h \
-    filtermodel.h
+    filtermodel.h \
+    checklistcombobox.h \
+    checklistmodel.h \
+    combocheckboxdelegate.h
 
 FORMS    += mainwindow.ui
 

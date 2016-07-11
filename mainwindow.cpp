@@ -13,6 +13,7 @@
 #include "propertymodel.h"
 #include "tagsmodel.h"
 #include "filtermodel.h"
+#include "combocheckboxdelegate.h"
 
 #include <QDebug>
 
@@ -78,6 +79,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->filesView->setModel(mFiles);
 	ui->propertyView->setModel(mProperties);
+	ui->propertyView->setItemDelegateForColumn(
+		PropertyModel::valueColumn,
+		new ComboCheckBoxDelegate(this, ", "));
 	ui->tagsView->setModel(mTags);
 	load();
 }

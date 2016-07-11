@@ -444,25 +444,33 @@ void TracksModel::loadDB()
 	QSqlQuery qSelectPropForTracks(db);
 	// zats wan grit kwery!!! B-)
 	qSelectPropForTracks.exec(
-		"SELECT id, name, val FROM ("
-		"	SELECT track.id, name, value as val "
-		"	FROM track "
-		"	JOIN trackproperty ON track.id=trackproperty.track "
-		"	JOIN property ON trackproperty.property=property.id "
-		"UNION "
-		"	SELECT track.id, name, tag.tag as val "
-		"	FROM track "
-		"	JOIN tracktag ON tracktag.track=track.id "
-		"	JOIN tag ON tracktag.tag=tag.id "
-		"	JOIN property ON tag.property=property.id"
-		")"
-		);
+		"SELECT track.id, name, value as val "
+		"FROM track "
+		"JOIN trackproperty ON track.id=trackproperty.track "
+		"JOIN property ON trackproperty.property=property.id ");
 	while(qSelectPropForTracks.next()) {
 		Record *rec = mTracks.value(qSelectPropForTracks.value(0).toInt(), NULL);
 		if (!rec)
 			continue;
 		rec->mProperties[qSelectPropForTracks.value(1).toString()] =
 			qSelectPropForTracks.value(2).toString();
+	}
+
+	QSqlQuery qSelectCatsForTracks(db);
+	// zats wan grit kwery!!! B-)
+	qSelectCatsForTracks.exec(
+		"SELECT track.id, name, tag.tag as val "
+		"FROM track "
+		"JOIN tracktag ON tracktag.track=track.id "
+		"JOIN tag ON tracktag.tag=tag.id "
+		"JOIN property ON tag.property=property.id"
+		);
+	while(qSelectCatsForTracks.next()) {
+		Record *rec = mTracks.value(qSelectCatsForTracks.value(0).toInt(), NULL);
+		if (!rec)
+			continue;
+		rec->mCategories[qSelectCatsForTracks.value(1).toString()].append(
+			qSelectCatsForTracks.value(2).toString());
 	}
 
 	endResetModel();
