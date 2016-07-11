@@ -212,7 +212,7 @@ QStringList TracksModel::allCategories(QString type) const
 
 QStringList TracksModel::allProperties() const
 {
-	return mOrdProps + mCatProps;
+	return mCatProps + mOrdProps;
 }
 
 QStringList TracksModel::allBigProperties() const
@@ -828,6 +828,11 @@ File *TracksModel::readFile(QString filename)
 		"INSERT INTO file (filename, title, artist, album) "
 		"VALUES (:filename, :title, :artist, :album)");
 
+	QSqlQuery qAddProp(db);
+	qAddProp.prepare(
+		"INSERT INTO property (name, big, fixed) "
+		"VALUES (:name, 0, 0)");
+
 	QProcess prc;
 	prc.start("./id3", QStringList() << filename);
 	if (!prc.waitForStarted() || !prc.waitForFinished()) {
@@ -852,8 +857,24 @@ File *TracksModel::readFile(QString filename)
 			file->artist = tagvalue;
 		else if (tagname == "Album")
 			file->album = tagvalue;
-		else if (tagname != "File" && mOrdProps.contains(tagname))
-			file->tags[tagname] = tagvalue;
+		else if (tagname != "File" && tagname != "Metadata") {
+			qDebug() << tagname << tagvalue;
+			if (!mOrdProps.contains(tagname)) {
+				if (!mProperties.contains(tagname)) {
+					qAddProp.bindValue(":album", file->album);
+					qAddProp.exec();
+					Property* prop = new Property;
+					prop->mId = qAddProp.lastInsertId().toInt();
+					prop->type = Property::Ordinary;
+					prop->name = tagname;
+					mProperties[tagname] = prop;
+					mOrdProps.append(tagname);
+					emit dbChanged();
+				}
+			}
+			if (mOrdProps.contains(tagname))
+				file->tags[tagname] = tagvalue;
+		}
 	}
 
 	qAddFile.bindValue(":filename", filename);
