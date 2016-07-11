@@ -98,7 +98,8 @@ struct Record {
 	bool match(File* file) const;
 	bool addFile(File *file);
 	bool removeFile(File *file);
-	void addInfo();
+	void setChanged();
+	bool changed() const;
 
 	RecordChanges* compare(Record* other);
 

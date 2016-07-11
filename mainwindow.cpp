@@ -57,6 +57,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(mTracks, SIGNAL(recordSelected(Record*)), this, SLOT(onSelected(Record*)));
 	connect(mTracks, SIGNAL(dbChanged()), this, SLOT(onDBChanged()));
 	connect(mTracks, SIGNAL(tagsChanged()), this, SLOT(onTagsChanged()));
+	connect(mTracks, SIGNAL(recordChanged()), this, SLOT(onRecordChanged()));
+	connect(mTracks, SIGNAL(recordSelected(Record*)), this, SLOT(onRecordChanged()));
 
 	connect(ui->actionSaveTrack, SIGNAL(triggered(bool)), mTracks, SLOT(saveRecord()));
 	connect(ui->actionNewTrack, SIGNAL(triggered(bool)), mTracks, SLOT(newRecord()));
@@ -278,7 +280,8 @@ void MainWindow::onBigPropertyEdited()
 	QString prop = sender()->property("propname").toString();
 	if (prop.isEmpty())
 		return;
-	mSelected->setProperty(prop, mBigProps[prop]->toPlainText());
+	if (mSelected->setProperty(prop, mBigProps[prop]->toPlainText()))
+		mTracks->updateRecord();
 }
 
 void MainWindow::play(QString file)
@@ -333,4 +336,13 @@ void MainWindow::onTagsChanged()
 {
 	ui->tagCombo->clear();
 	ui->tagCombo->addItems(mTracks->allTags());
+}
+
+void MainWindow::onRecordChanged()
+{
+	ui->actionCancelChanges->setEnabled(mSelected && mSelected->changed());
+	ui->actionSaveTrack->setEnabled(mSelected && mSelected->changed());
+	ui->actionPlayTrack->setEnabled(mSelected && !mSelected->main().isEmpty());
+	ui->actionPlayTrackMinus->setEnabled(mSelected && !mSelected->minus().isEmpty());
+	ui->actionPrint->setEnabled(mSelected);
 }

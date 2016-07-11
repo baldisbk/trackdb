@@ -39,14 +39,20 @@ QVariant Record::property(QString name) const
 bool Record::setProperty(QString name, QVariant value)
 {
 	if (name.isEmpty()) {
+		if (mTags == value.toStringList())
+			return false;
 		mTags = value.toStringList();
 		return true;
 	}
 	if (value.type() == QVariant::String) {
+		if (mProperties[name] == value.toString())
+			return false;
 		mProperties[name] = value.toString();
 		return true;
 	}
 	if (value.type() == QVariant::StringList) {
+		if (mCategories[name] == value.toStringList())
+			return false;
 		mCategories[name] = value.toStringList();
 		return true;
 	}
@@ -141,14 +147,14 @@ bool Record::removeFile(File *file)
 	return true;
 }
 
-void Record::addInfo()
+void Record::setChanged()
 {
-	switch (fill()) {
-	case oneFileState: mFill = noMinusState;
-	case noInfoState: mFill = fullState;
-	default:;
-	}
 	mChanged = true;
+}
+
+bool Record::changed() const
+{
+	return mChanged;
 }
 
 RecordChanges *Record::compare(Record *other)

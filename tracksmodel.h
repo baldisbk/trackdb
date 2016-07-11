@@ -73,6 +73,8 @@ public slots:
 
 	void playFile(const QString& file);
 
+	void updateRecord();
+
 signals:
 	void message(QString msg);
 	void progressStart(int size, QString msg);
@@ -80,6 +82,7 @@ signals:
 	void progress(int p);
 
 	void recordSelected(Record* rec);
+	void recordChanged();
 	void dbChanged();
 	void tagsChanged();
 

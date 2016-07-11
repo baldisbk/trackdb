@@ -67,6 +67,7 @@ private slots:
 
 	void onDBChanged();
 	void onTagsChanged();
+	void onRecordChanged();
 
 private:
 	Ui::MainWindow *ui;

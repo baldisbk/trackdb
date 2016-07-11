@@ -95,6 +95,7 @@ bool TracksModel::setMainFile(QString file)
 	if (mSelectedTrack->minus() == file)
 		mSelectedTrack->mMinus = mSelectedTrack->main();
 	mSelectedTrack->mMain = file;
+	updateRecord();
 	return true;
 }
 
@@ -108,6 +109,7 @@ bool TracksModel::setMinusFile(QString file)
 	if (mSelectedTrack->main() == file)
 		mSelectedTrack->mMain = mSelectedTrack->minus();
 	mSelectedTrack->mMinus = file;
+	updateRecord();
 	return true;
 }
 
@@ -124,6 +126,7 @@ bool TracksModel::addFile(QString file)
 		File* f = mFiles[mFileIds[file]];
 		mSelectedTrack->addFile(f);
 	}
+	updateRecord();
 	return true;
 }
 
@@ -148,6 +151,7 @@ bool TracksModel::removeFile(QString file)
 
 		delete toRemove;
 	}
+	updateRecord();
 	return true;
 }
 
@@ -187,6 +191,7 @@ bool TracksModel::addTag(QString tag)
 	if (mSelectedTrack->tags().contains(tag))
 		return false;
 	mSelectedTrack->mTags.append(tag);
+	updateRecord();
 	return true;
 }
 
@@ -197,6 +202,7 @@ bool TracksModel::removeTag(QString tag)
 	if (!mSelectedTrack->tags().contains(tag))
 		return false;
 	mSelectedTrack->mTags.removeAll(tag);
+	updateRecord();
 	return true;
 }
 
@@ -474,6 +480,7 @@ void TracksModel::loadDB()
 	}
 
 	endResetModel();
+	emit recordSelected(mSelectedTrack);
 }
 
 void TracksModel::scanPath(const QString &path)
@@ -777,6 +784,8 @@ void TracksModel::saveRecord()
 			qUpdFile.exec();
 		}
 	}
+	mSelectedTrack->mChanged = false;
+	emit recordSelected(mSelectedTrack);
 }
 
 void TracksModel::revertRecord()
@@ -790,6 +799,7 @@ void TracksModel::revertRecord()
 		Record* origin = mTracks[mSelectedTrack->id()];
 		*mSelectedTrack = *origin;
 	}
+	mSelectedTrack->mChanged = false;
 	emit recordSelected(mSelectedTrack);
 }
 
@@ -815,6 +825,13 @@ void TracksModel::playFile(const QString &file)
 		qUpdFile.bindValue(":id", f->id());
 		qUpdFile.exec();
 	}
+}
+
+void TracksModel::updateRecord()
+{
+	if (mSelectedTrack)
+		mSelectedTrack->mChanged = true;
+	emit recordChanged();
 }
 
 File *TracksModel::readFile(QString filename)

@@ -116,10 +116,9 @@ bool PropertyModel::setData(const QModelIndex &index, const QVariant &value, int
 		break;
 	}
 	}
-	mRecord->addInfo();
+	mDatabase->updateRecord();
 
 	emit dataChanged(index, index);
-	emit changed();
 	return true;
 }
 
