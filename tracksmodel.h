@@ -86,6 +86,9 @@ signals:
 protected:
 	File* readFile(QString filename);
 
+	int insertTrack();
+	void updateTrack(Record* rec, Record *origin);
+
 private:
 	QMap<int, Record*> mTracks;
 	QMap<int, File*> mFiles;

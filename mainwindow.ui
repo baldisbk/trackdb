@@ -122,7 +122,7 @@
                <bool>false</bool>
               </attribute>
              </widget>
-             <widget class="QWidget" name="layoutWidget">
+             <widget class="QWidget" name="filesLayoutWidget">
               <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
                <item>
                 <widget class="QTableView" name="filesView">
@@ -164,7 +164,7 @@
                </item>
               </layout>
              </widget>
-             <widget class="QWidget" name="layoutWidget">
+             <widget class="QWidget" name="tagsLayoutWidget">
               <layout class="QHBoxLayout" name="tagsLayout" stretch="0,0">
                <item>
                 <widget class="QTableView" name="tagsView">
@@ -239,6 +239,37 @@
      <height>25</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionAddFolder"/>
+    <addaction name="actionImport"/>
+    <addaction name="actionExport"/>
+   </widget>
+   <widget class="QMenu" name="menuFilter">
+    <property name="title">
+     <string>Filter</string>
+    </property>
+    <addaction name="actionFilterFullInfo"/>
+    <addaction name="actionFilterFilesOnly"/>
+    <addaction name="actionFilterInfoOnly"/>
+   </widget>
+   <widget class="QMenu" name="menuTrack">
+    <property name="title">
+     <string>Track</string>
+    </property>
+    <addaction name="actionNewTrack"/>
+    <addaction name="actionSaveTrack"/>
+    <addaction name="actionCancelChanges"/>
+    <addaction name="separator"/>
+    <addaction name="actionPlayTrack"/>
+    <addaction name="actionPlayTrackMinus"/>
+    <addaction name="actionPrint"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuFilter"/>
+   <addaction name="menuTrack"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -257,6 +288,7 @@
    <addaction name="separator"/>
    <addaction name="actionNewTrack"/>
    <addaction name="actionSaveTrack"/>
+   <addaction name="actionCancelChanges"/>
    <addaction name="actionPlayTrack"/>
    <addaction name="actionPlayTrackMinus"/>
    <addaction name="actionPrint"/>
@@ -340,10 +372,10 @@
   <action name="actionExport">
    <property name="icon">
     <iconset resource="pics.qrc">
-     <normaloff>:/pics/save.png</normaloff>:/pics/save.png</iconset>
+     <normaloff>:/pics/export.png</normaloff>:/pics/export.png</iconset>
    </property>
    <property name="text">
-    <string>Export</string>
+    <string>Export database</string>
    </property>
   </action>
   <action name="actionSaveTrack">
@@ -380,6 +412,15 @@
    </property>
    <property name="text">
     <string>Play track minus</string>
+   </property>
+  </action>
+  <action name="actionCancelChanges">
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/revert.png</normaloff>:/pics/revert.png</iconset>
+   </property>
+   <property name="text">
+    <string>Undo changes</string>
    </property>
   </action>
  </widget>

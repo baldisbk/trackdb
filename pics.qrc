@@ -14,5 +14,7 @@
         <file>pics/print.png</file>
         <file>pics/save.png</file>
         <file>pics/storage.png</file>
+        <file>pics/export.png</file>
+        <file>pics/revert.png</file>
     </qresource>
 </RCC>

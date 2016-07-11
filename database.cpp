@@ -85,13 +85,11 @@ bool Record::addFile(File* file)
 	case noMinusState:
 		mFill = fullState;
 		if (mMinus.isEmpty())
-			// TODO smart check
 			mMinus = file->filename;
 		break;
 	case oneFileState:
 		mFill = noInfoState;
 		if (mMinus.isEmpty())
-			// TODO smart check
 			mMinus = file->filename;
 		break;
 	default:;
@@ -151,4 +149,56 @@ void Record::addInfo()
 	default:;
 	}
 	mChanged = true;
+}
+
+RecordChanges *Record::compare(Record *other)
+{
+	RecordChanges* rc = new RecordChanges;
+
+	rc->info =
+		title != other->title ||
+		album != other->album ||
+		artist != other->artist ||
+		lastChanged != other->lastChanged;
+
+	foreach(QString tag, mTags)
+		if (!other->mTags.contains(tag))
+			rc->addedTags.append(tag);
+	foreach(QString tag, other->mTags)
+		if (!mTags.contains(tag))
+			rc->removedTags.append(tag);
+
+	QStringList thisCats, thatCats;
+	foreach(QStringList cats, mCategories)
+		thisCats.append(cats);
+	foreach(QStringList cats, other->mCategories)
+		thatCats.append(cats);
+
+	foreach(QString cat, thisCats)
+		if (!thatCats.contains(cat))
+			rc->addedTags.append(cat);
+	foreach(QString cat, thatCats)
+		if (!thisCats.contains(cat))
+			rc->removedTags.append(cat);
+
+	foreach(QString file, mFiles)
+		if (!other->mFiles.contains(file))
+			rc->addedFiles.append(file);
+	foreach(QString file, other->mFiles)
+		if (!mFiles.contains(file))
+			rc->removedFiles.append(file);
+
+	foreach(QString prop, mProperties.keys())
+		if (property(prop) != other->property(prop)) {
+			if (other->property(prop).toString().isEmpty())
+				rc->addedProps.append(prop);
+			else
+				rc->changedProps.append(prop);
+		}
+	foreach(QString prop, other->mProperties.keys())
+		if (property(prop) != other->property(prop))
+			if (property(prop).toString().isEmpty())
+				rc->removedProps.append(prop);
+
+	return rc;
 }

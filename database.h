@@ -65,6 +65,15 @@ private:
 	friend class TracksModel;
 };
 
+struct RecordChanges {
+	bool info;
+	QStringList
+		addedTags, removedTags,
+		addedFiles, removedFiles,
+		addedProps, removedProps,
+		changedProps;
+};
+
 struct Record {
 	Record();
 	Record(File* file, int id);
@@ -90,6 +99,8 @@ struct Record {
 	bool addFile(File *file);
 	bool removeFile(File *file);
 	void addInfo();
+
+	RecordChanges* compare(Record* other);
 
 private:
 	FillState mFill;

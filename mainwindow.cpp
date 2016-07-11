@@ -59,9 +59,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	connect(ui->actionSaveTrack, SIGNAL(triggered(bool)), mTracks, SLOT(saveRecord()));
 	connect(ui->actionNewTrack, SIGNAL(triggered(bool)), mTracks, SLOT(newRecord()));
-//	connect(ui->actionUndoTrack, SIGNAL(clicked(bool)), mTracks, SLOT(undoRecord()));
+	connect(ui->actionCancelChanges, SIGNAL(triggered(bool)), mTracks, SLOT(revertRecord()));
+
 	connect(ui->actionPlayTrack, SIGNAL(triggered(bool)), this, SLOT(onPlayPlus()));
 	connect(ui->actionPlayTrackMinus, SIGNAL(triggered(bool)), this, SLOT(onPlayMinus()));
+
 	connect(ui->actionAddFolder, SIGNAL(triggered(bool)), this, SLOT(onSetStorage()));
 	connect(ui->actionExport, SIGNAL(triggered(bool)), this, SLOT(onExport()));
 	connect(ui->actionImport, SIGNAL(triggered(bool)), this, SLOT(onImport()));
@@ -288,6 +290,7 @@ void MainWindow::onProgressInit(int range, QString label)
 	mProgress->setMinimumDuration(1000);
 	mProgress->setRange(0, range);
 	mProgress->setLabelText(label);
+	mProgress->setValue(0);
 }
 
 void MainWindow::onDBChanged()
