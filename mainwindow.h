@@ -52,6 +52,9 @@ private slots:
 	void onPlayMinus();
 	void onAddTag();
 	void onRemoveTag();
+	void onAddFile();
+	void onMoveFile();
+	void onDeleteFile();
 	void onSetStorage();
 	void onImport();
 	void onExport();
@@ -74,7 +77,10 @@ private:
 
 	Record* mSelected;
 
+	// settings
 	QString mStoragePath;
+	QString mLastOpenPath;
+	QString mLastExpImpPath;
 
 	QProgressDialog* mProgress;
 	TracksModel* mTracks;

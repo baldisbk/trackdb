@@ -140,21 +140,21 @@
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_2">
                  <item>
-                  <widget class="QPushButton" name="pushButton">
+                  <widget class="QPushButton" name="addFileButton">
                    <property name="text">
                     <string>Add new file</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="pushButton_3">
+                  <widget class="QPushButton" name="moveFileButton">
                    <property name="text">
                     <string>Add known file</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="pushButton_2">
+                  <widget class="QPushButton" name="deleteFileButton">
                    <property name="text">
                     <string>Remove file</string>
                    </property>

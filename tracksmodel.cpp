@@ -127,6 +127,7 @@ bool TracksModel::addFile(QString file)
 		mSelectedTrack->addFile(f);
 	}
 	updateRecord();
+	emit recordSelected(mSelectedTrack);
 	return true;
 }
 
@@ -319,8 +320,7 @@ QVariant TracksModel::data(const QModelIndex &index, int role) const
 QStringList scanDir(const QString &path)
 {
 	QDir dir(path);
-	QStringList filters;
-	filters << "*.mp3" << "*.jpeg" << "*.png";
+	QStringList filters = QString(SUPPORTED_TYPES).split(" ");
 	QStringList res;
 	QStringList files = dir.entryList(filters, QDir::Files);
 	QStringList dirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
@@ -404,7 +404,7 @@ void TracksModel::loadDB()
 		if (!rec) {
 			bool found = false;
 			foreach(Record* r, mTracks) {
-				if (r->addFile(file)) {
+				if (r->match(file) && r->addFile(file)) {
 					found = true;
 					file->mTrack = r->id();
 					break;
@@ -414,16 +414,17 @@ void TracksModel::loadDB()
 				rec = new Record(file, -mTracks.size() - 1);
 				mTracks[rec->id()] = rec;
 				mTrackIds.append(rec->id());
+				file->mTrack = rec->id();
 			}
 		} else {
 			bool nomain = rec->main().isEmpty();
 			bool nominus = rec->minus().isEmpty();
 			rec->addFile(file);
-			if (file->track() == qSelectFiles.value(7).toInt())
+			if (file->id() == qSelectFiles.value(7).toInt())
 				rec->mMain = file->filename;
 			else if (nomain)
 				rec->mMain.clear();
-			if (file->track() == qSelectFiles.value(8).toInt())
+			if (file->id() == qSelectFiles.value(8).toInt())
 				rec->mMinus = file->filename;
 			else if (nominus)
 				rec->mMinus.clear();
@@ -506,7 +507,7 @@ void TracksModel::scanPath(const QString &path)
 		// find appropriate record
 		bool found = false;
 		foreach(Record* rec, mTracks) {
-			if (rec->addFile(newFile)) {
+			if (rec->match(newFile) && rec->addFile(newFile)) {
 				found = true;
 				newFile->mTrack = rec->id();
 				break;
@@ -516,6 +517,7 @@ void TracksModel::scanPath(const QString &path)
 			Record* rec = new Record(newFile, -mTracks.size() - 1);
 			mTracks[rec->id()] = rec;
 			mTrackIds.append(rec->id());
+			newFile->mTrack = rec->id();
 		}
 
 		emit progress(number++);
@@ -604,6 +606,8 @@ int TracksModel::insertTrack()
 
 void TracksModel::updateTrack(Record *rec, Record* origin)
 {
+	if (rec->id() < 0)
+		return;
 	QSqlDatabase db = QSqlDatabase::database();
 
 	RecordChanges* rc = rec->compare(origin);
@@ -760,17 +764,25 @@ void TracksModel::saveRecord()
 	QSqlDatabase db = QSqlDatabase::database();
 
 	QSqlQuery qUpdFile(db);
-	qUpdFile.prepare("UPDATE files SET track=:track WHERE id=:id");
+	qUpdFile.prepare("UPDATE file SET track=:track WHERE id=:id");
 
 	QStringList files = mSelectedTrack->files();
 	foreach(QString file, files) {
 		File* f = mFiles.value(mFileIds.value(file, 0), NULL);
 		if (!f) continue;
 		if (f->track() != mSelectedTrack->id()) {
-			if (f->track() != 0)
-			{
-				Record* old = mTracks.value(f->track(), NULL);
-				if (old) {
+			Record* old = mTracks.value(f->track(), NULL);
+			if (old) {
+				if (old->id() < 0 && old->files().size() == 1) {
+					// remove track
+					int ind = mTrackIds.indexOf(old->id());
+					beginRemoveRows(QModelIndex(), ind, ind);
+					mTrackIds.removeAt(ind);
+					endRemoveRows();
+					mTracks.remove(old->id());
+					delete old;
+				} else {
+					// update track
 					Record* tmp = new Record;
 					*tmp = *old;
 					old->removeFile(f);
@@ -875,7 +887,6 @@ File *TracksModel::readFile(QString filename)
 		else if (tagname == "Album")
 			file->album = tagvalue;
 		else if (tagname != "File" && tagname != "Metadata") {
-			qDebug() << tagname << tagvalue;
 			if (!mOrdProps.contains(tagname)) {
 				if (!mProperties.contains(tagname)) {
 					qAddProp.bindValue(":album", file->album);

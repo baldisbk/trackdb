@@ -5,6 +5,8 @@
 
 #include "database.h"
 
+#define SUPPORTED_TYPES "*.mp3"
+
 class TracksModel : public QAbstractItemModel
 {
 	Q_OBJECT

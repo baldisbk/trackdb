@@ -20,7 +20,7 @@ enum FillState {
 class TracksModel;
 
 struct File {
-	File(): mId(-1), mTrack(-1) {}
+	File(): mId(0), mTrack(0) {}
 	QString filename;
 	QString title;
 	QString artist;
@@ -44,7 +44,7 @@ struct Property {
 		Category
 	};
 
-	Property(): type(Ordinary), mId(-1) {}
+	Property(): type(Ordinary), mId(0) {}
 	int id() const {return mId;}
 	Type type;
 	QString name;
@@ -55,7 +55,7 @@ private:
 };
 
 struct Tag {
-	Tag(): mId(-1) {}
+	Tag(): mId(0) {}
 	int id() const {return mId;}
 	QString type;
 	QString name;

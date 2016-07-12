@@ -7,6 +7,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QVBoxLayout>
+#include <QFileDialog>
 
 #include "tracksmodel.h"
 #include "filesmodel.h"
@@ -78,6 +79,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	connect(ui->addTagButton, SIGNAL(clicked(bool)), this, SLOT(onAddTag()));
 	connect(ui->removeTagButton, SIGNAL(clicked(bool)), this, SLOT(onRemoveTag()));
+
+	connect(ui->addFileButton, SIGNAL(clicked(bool)), this, SLOT(onAddFile()));
+	connect(ui->deleteFileButton, SIGNAL(clicked(bool)), this, SLOT(onDeleteFile()));
+	connect(ui->moveFileButton, SIGNAL(clicked(bool)), this, SLOT(onMoveFile()));
+	// no logic yet
+	ui->deleteFileButton->setVisible(false);
+	ui->moveFileButton->setVisible(false);
 
 	ui->filesView->setModel(mFiles);
 	ui->propertyView->setModel(mProperties);
@@ -234,6 +242,41 @@ void MainWindow::onRemoveTag()
 	if (!tag.isEmpty())
 		mTracks->removeTag(tag);
 	mTags->onRecordChanged(mSelected);
+}
+
+void MainWindow::onAddFile()
+{
+	QStringList res = QFileDialog::getOpenFileNames(
+		this,
+		"Select one or more files to add",
+		mLastOpenPath,
+		QString("Tracks (%1)").arg(SUPPORTED_TYPES));
+	QStringList files = res;
+	foreach(QString file, files) {
+		QFileInfo fi(file);
+		if (!fi.absolutePath().toLower().startsWith(mStoragePath.toLower())) {
+			// not in a subdir
+			QDir(mStoragePath).mkpath("Auto");
+			QString newName = QString("%1/Auto/%2").
+					arg(mStoragePath).arg(fi.fileName());
+			QFile::copy(file, newName);
+			mTracks->addFile(newName);
+		} else
+			mTracks->addFile(file);
+	}
+}
+
+void MainWindow::onMoveFile()
+{
+	QStringList files;
+	// TODO
+	foreach(QString file, files)
+		mTracks->addFile(file);
+}
+
+void MainWindow::onDeleteFile()
+{
+	// TODO
 }
 
 void MainWindow::onSetStorage()

@@ -67,10 +67,15 @@ FillState Record::fill() const {return mFill;}
 
 bool Record::match(File *file) const
 {
+	if (file->artist.isEmpty())
+		return false;
+	if (file->title.isEmpty())
+		return false;
+	if (!file->album.isEmpty() && file->album != album)
+		return false;
 	return
 		file->title == title &&
-		file->album == album &&
-			file->artist == artist;
+		file->artist == artist;
 }
 
 bool Record::addFile(File* file)
@@ -78,8 +83,6 @@ bool Record::addFile(File* file)
 	if (!file)
 		return false;
 	if (mFiles.contains(file->filename))
-		return false;
-	if (!match(file))
 		return false;
 
 	mFiles.append(file->filename);
