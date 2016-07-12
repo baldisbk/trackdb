@@ -67,6 +67,7 @@ public:
 
 public slots:
 	void loadDB();
+	void clearFiles();
 	void scanPath(const QString& path);
 
 	void selectRecord(const QModelIndex& index);

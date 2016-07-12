@@ -8,6 +8,7 @@
 #include <QSqlRecord>
 
 #include <QProcess>
+#include <QCoreApplication>
 
 #include <QDebug>
 
@@ -399,22 +400,11 @@ void TracksModel::loadDB()
 
 		Record* rec = mTracks.value(file->track(), NULL);
 		if (!rec) {
-			bool found = false;
-			foreach(Record* r, mTracks) {
-				if (r->match(file) && r->addFile(file)) {
-					r->setChanged();
-					found = true;
-					file->mTrack = r->id();
-					break;
-				}
-			}
-			if (!found) {
-				rec = new Record(file, -mTracks.size() - 1);
-				mTracks[rec->id()] = rec;
-				mTrackIds.append(rec->id());
-				file->mTrack = rec->id();
-				rec->setChanged();
-			}
+			rec = new Record(file, -mTracks.size() - 1);
+			mTracks[rec->id()] = rec;
+			mTrackIds.append(rec->id());
+			file->mTrack = rec->id();
+			rec->setChanged();
 		} else {
 			bool nomain = rec->main().isEmpty();
 			bool nominus = rec->minus().isEmpty();
@@ -483,6 +473,33 @@ void TracksModel::loadDB()
 	emit recordSelected(mSelectedTrack);
 }
 
+void TracksModel::clearFiles()
+{
+	QSqlDatabase db = QSqlDatabase::database();
+	QSqlQuery qDeleteFiles(db);
+	qDeleteFiles.exec("DELETE FROM file");
+	qDeleteFiles.exec("UPDATE track SET main=0, minus=0");
+
+	beginResetModel();
+	mFileIds.clear();
+	mFiles.clear();
+	QList<int> toDelete;
+	foreach(Record* track, mTracks) {
+		track->mMain.clear();
+		track->mMinus.clear();
+		track->mFiles.clear();
+		track->mFill = noFileState;
+		if (track->id() < 0)
+			toDelete.append(track->id());
+	}
+	foreach(int id, toDelete) {
+		mTrackIds.removeAll(id);
+		mTracks.remove(id);
+	}
+
+	endResetModel();
+}
+
 void TracksModel::scanPath(const QString &path)
 {
 	QStringList files = scanDir(path);
@@ -491,6 +508,8 @@ void TracksModel::scanPath(const QString &path)
 	beginResetModel();
 
 	foreach(QString file, files) {
+
+		QCoreApplication::processEvents();
 
 		if (mFileIds.contains(file)) {
 			emit progress(number++);
@@ -517,6 +536,7 @@ void TracksModel::scanPath(const QString &path)
 			Record* rec = new Record(newFile, -mTracks.size() - 1);
 			mTracks[rec->id()] = rec;
 			mTrackIds.append(rec->id());
+			rec->setChanged();
 			newFile->mTrack = rec->id();
 		}
 

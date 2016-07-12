@@ -34,6 +34,9 @@ public:
 	explicit MainWindow(QWidget *parent = 0);
 	~MainWindow();
 
+protected:
+	virtual void closeEvent(QCloseEvent *e);
+
 private:
 	void save();
 	void load();

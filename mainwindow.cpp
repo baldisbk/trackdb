@@ -8,6 +8,8 @@
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QFileDialog>
+#include <QSettings>
+#include <QMessageBox>
 
 #include "tracksmodel.h"
 #include "filesmodel.h"
@@ -75,8 +77,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->actionFilterFilesOnly, SIGNAL(toggled(bool)), this, SLOT(onFFilter(bool)));
 	connect(ui->actionFilterFullInfo, SIGNAL(toggled(bool)), this, SLOT(onIFFilter(bool)));
 	connect(ui->actionFilterInfoOnly, SIGNAL(toggled(bool)), this, SLOT(onIFilter(bool)));
-	ui->actionFilterFullInfo->setChecked(true);
-	ui->actionFilterInfoOnly->setChecked(true);
 
 	connect(ui->addTagButton, SIGNAL(clicked(bool)), this, SLOT(onAddTag()));
 	connect(ui->removeTagButton, SIGNAL(clicked(bool)), this, SLOT(onRemoveTag()));
@@ -105,13 +105,65 @@ MainWindow::~MainWindow()
 
 void MainWindow::save()
 {
-	// TODO
+	QSettings settings;
+
+	settings.beginGroup("GUI");
+	settings.setValue("mainwindow", saveState());
+	settings.setValue("tracktable", ui->dbView->horizontalHeader()->saveState());
+	settings.setValue("proptable", ui->propertyView->horizontalHeader()->saveState());
+	settings.setValue("filestable", ui->filesView->horizontalHeader()->saveState());
+	settings.setValue("tagstable", ui->tagsView->horizontalHeader()->saveState());
+	settings.setValue("splitter", ui->splitter->saveState());
+	settings.setValue("dbshown", ui->dbWidget->isVisible());
+	settings.setValue("infoshown", ui->infoWidget->isVisible());
+	settings.endGroup();
+
+	settings.beginGroup("FILTER");
+	settings.setValue("fullfilter", ui->actionFilterFullInfo->isChecked());
+	settings.setValue("filefilter", ui->actionFilterFilesOnly->isChecked());
+	settings.setValue("infofilter", ui->actionFilterInfoOnly->isChecked());
+	settings.endGroup();
+
+	settings.beginGroup("PATHS");
+	settings.setValue("storage", mStoragePath);
+	settings.setValue("lastadd", mLastOpenPath);
+	settings.setValue("lastimp", mLastExpImpPath);
+	settings.endGroup();
 }
 
 void MainWindow::load()
 {
-	// TODO
-	mStoragePath = "/home/baldis/Projects/personal/music";
+	QSettings settings;
+
+	settings.beginGroup("GUI");
+	restoreState(settings.value("mainwindow").toByteArray());
+	ui->dbView->horizontalHeader()->restoreState(settings.value("tracktable").toByteArray());
+	ui->propertyView->horizontalHeader()->restoreState(settings.value("proptable").toByteArray());
+	ui->filesView->horizontalHeader()->restoreState(settings.value("filestable").toByteArray());
+	ui->tagsView->horizontalHeader()->restoreState(settings.value("tagstable").toByteArray());
+	ui->splitter->restoreState(settings.value("splitter").toByteArray());
+	ui->dbWidget->setVisible(settings.value("dbshown", true).toBool());
+	ui->infoWidget->setVisible(settings.value("infoshown", true).toBool());
+	settings.endGroup();
+
+	settings.beginGroup("FILTER");
+	ui->actionFilterFullInfo->setChecked(settings.value("fullfilter", true).toBool());
+	ui->actionFilterFilesOnly->setChecked(settings.value("filefilter", false).toBool());
+	ui->actionFilterInfoOnly->setChecked(settings.value("infofilter", true).toBool());
+	settings.endGroup();
+
+	settings.beginGroup("PATHS");
+	mStoragePath = settings.value("storage").toString();
+	mLastOpenPath = settings.value("lastadd").toString();
+	mLastExpImpPath = settings.value("lastimp").toString();
+	settings.endGroup();
+
+	if (mStoragePath.isEmpty()) {
+		QMessageBox::information(
+			this, tr("Use the force, Luke"),
+			tr("Select a folder for storage of music files"));
+		onSetStorage();
+	}
 
 	mTracks->loadDB();
 	mTracks->scanPath(mStoragePath);
@@ -252,12 +304,13 @@ void MainWindow::onAddFile()
 		return;
 	QStringList res = QFileDialog::getOpenFileNames(
 		this,
-		"Select one or more files to add",
+		tr("Select one or more files to add"),
 		mLastOpenPath,
-		QString("Tracks (%1)").arg(SUPPORTED_TYPES));
+		QString(tr("Tracks (%1)")).arg(SUPPORTED_TYPES));
 	QStringList files = res;
 	foreach(QString file, files) {
 		QFileInfo fi(file);
+		mLastOpenPath = fi.absolutePath();
 		if (!fi.absolutePath().toLower().startsWith(mStoragePath.toLower())) {
 			// not in a subdir
 			QDir(mStoragePath).mkpath("Auto");
@@ -301,7 +354,20 @@ void MainWindow::onAutoFile()
 
 void MainWindow::onSetStorage()
 {
-	// TODO
+	if (!mStoragePath.isEmpty()) {
+		if (QMessageBox::warning(
+			this, tr("Resistance is futile"),
+			tr("All old files will be removed from database! Continue?"),
+			QMessageBox::Ok | QMessageBox::Cancel) ==
+				QMessageBox::Cancel)
+			return;
+	}
+	QString newStorage = QFileDialog::getExistingDirectory(
+		this, tr("Select new storage"), mStoragePath);
+	if (!newStorage.isEmpty()) {
+		mTracks->clearFiles();
+		mTracks->scanPath(mStoragePath = newStorage);
+	}
 }
 
 void MainWindow::onImport()
@@ -408,4 +474,10 @@ void MainWindow::onRecordChanged()
 	ui->actionPlayTrack->setEnabled(mSelected && !mSelected->main().isEmpty());
 	ui->actionPlayTrackMinus->setEnabled(mSelected && !mSelected->minus().isEmpty());
 	ui->actionPrint->setEnabled(mSelected);
+}
+
+void MainWindow::closeEvent(QCloseEvent *e)
+{
+	save();
+	QMainWindow::closeEvent(e);
 }
