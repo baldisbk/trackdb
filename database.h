@@ -79,7 +79,7 @@ struct Record {
 	Record(File* file, int id);
 
 	int id() const;
-	QString main() const;
+	QString prime() const;
 	QString minus() const;
 	QStringList propList() const;
 	QVariant property(QString name) const;

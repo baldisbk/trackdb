@@ -19,7 +19,7 @@ Record::Record(File *file, int id)
 
 int Record::id() const {return mId;}
 
-QString Record::main() const {return mMain;}
+QString Record::prime() const {return mMain;}
 
 QString Record::minus() const {return mMinus;}
 

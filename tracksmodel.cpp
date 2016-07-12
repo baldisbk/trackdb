@@ -94,7 +94,7 @@ bool TracksModel::setMainFile(QString file)
 		if (!addFile(file))
 			return false;
 	if (mSelectedTrack->minus() == file)
-		mSelectedTrack->mMinus = mSelectedTrack->main();
+		mSelectedTrack->mMinus = mSelectedTrack->prime();
 	mSelectedTrack->mMain = file;
 	updateRecord();
 	return true;
@@ -107,7 +107,7 @@ bool TracksModel::setMinusFile(QString file)
 	if (!mSelectedTrack->files().contains(file))
 		if (!addFile(file))
 			return false;
-	if (mSelectedTrack->main() == file)
+	if (mSelectedTrack->prime() == file)
 		mSelectedTrack->mMain = mSelectedTrack->minus();
 	mSelectedTrack->mMinus = file;
 	updateRecord();
@@ -406,7 +406,7 @@ void TracksModel::loadDB()
 			file->mTrack = rec->id();
 			rec->setChanged();
 		} else {
-			bool nomain = rec->main().isEmpty();
+			bool nomain = rec->prime().isEmpty();
 			bool nominus = rec->minus().isEmpty();
 			rec->addFile(file);
 			if (file->id() == qSelectFiles.value(7).toInt())
@@ -573,11 +573,11 @@ int TracksModel::insertTrack()
 	qAddTrack.bindValue(":title", mSelectedTrack->title);
 	qAddTrack.bindValue(":artist", mSelectedTrack->artist);
 	qAddTrack.bindValue(":album", mSelectedTrack->album);
-	if (mSelectedTrack->main().isEmpty())
+	if (mSelectedTrack->prime().isEmpty())
 		qAddTrack.bindValue(":main", QVariant());
 	else
-		qAddTrack.bindValue(":main", mFileIds.value(mSelectedTrack->main(), 0));
-	if (mSelectedTrack->main().isEmpty())
+		qAddTrack.bindValue(":main", mFileIds.value(mSelectedTrack->prime(), 0));
+	if (mSelectedTrack->prime().isEmpty())
 		qAddTrack.bindValue(":minus", QVariant());
 	else
 		qAddTrack.bindValue(":minus", mFileIds.value(mSelectedTrack->minus(), 0));
@@ -644,11 +644,11 @@ void TracksModel::updateTrack(Record *rec, Record* origin)
 		qUpdTrack.bindValue(":title", rec->title);
 		qUpdTrack.bindValue(":artist", rec->artist);
 		qUpdTrack.bindValue(":album", rec->album);
-		if (rec->main().isEmpty())
+		if (rec->prime().isEmpty())
 			qUpdTrack.bindValue(":main", QVariant());
 		else
-			qUpdTrack.bindValue(":main", mFileIds.value(rec->main(), 0));
-		if (rec->main().isEmpty())
+			qUpdTrack.bindValue(":main", mFileIds.value(rec->prime(), 0));
+		if (rec->prime().isEmpty())
 			qUpdTrack.bindValue(":minus", QVariant());
 		else
 			qUpdTrack.bindValue(":minus", mFileIds.value(rec->minus(), 0));
@@ -736,7 +736,7 @@ void TracksModel::saveRecord()
 		beginInsertRows(QModelIndex(), mTrackIds.size(), mTrackIds.size());
 		Record* newrec = new Record;
 		mTracks[id] = newrec;
-		if (newrec->main() == 0)
+		if (newrec->prime() == 0)
 			newrec->mFill = noFileState;
 		else if (newrec->minus() == 0)
 			newrec->mFill = noMinusState;
@@ -757,7 +757,7 @@ void TracksModel::saveRecord()
 			mSelectedTrack->mId = id;
 			mSelectedTrack->mChanged = false;
 			*newrec = *mSelectedTrack;
-			if (newrec->main() == 0)
+			if (newrec->prime() == 0)
 				newrec->mFill = noFileState;
 			else if (newrec->minus() == 0)
 				newrec->mFill = noMinusState;

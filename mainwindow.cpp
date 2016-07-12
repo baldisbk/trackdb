@@ -267,9 +267,9 @@ void MainWindow::onTrackSelected(QModelIndex index)
 
 void MainWindow::onPlayPlus()
 {
-	if (!mSelected || mSelected->main().isEmpty())
+	if (!mSelected || mSelected->prime().isEmpty())
 		return;
-	play(mSelected->main());
+	play(mSelected->prime());
 }
 
 void MainWindow::onPlayMinus()
@@ -471,7 +471,7 @@ void MainWindow::onRecordChanged()
 {
 	ui->actionCancelChanges->setEnabled(mSelected && mSelected->changed());
 	ui->actionSaveTrack->setEnabled(mSelected && mSelected->changed());
-	ui->actionPlayTrack->setEnabled(mSelected && !mSelected->main().isEmpty());
+	ui->actionPlayTrack->setEnabled(mSelected && !mSelected->prime().isEmpty());
 	ui->actionPlayTrackMinus->setEnabled(mSelected && !mSelected->minus().isEmpty());
 	ui->actionPrint->setEnabled(mSelected);
 }

@@ -43,7 +43,7 @@ QVariant FilesModel::data(const QModelIndex &ind, int role) const
 	case Qt::CheckStateRole:
 		switch(ind.column()) {
 		case primColumn:
-			if (mRecord->main() == mRecord->files()[ind.row()])
+			if (mRecord->prime() == mRecord->files()[ind.row()])
 				return Qt::Checked;
 			else
 				return Qt::Unchecked;
