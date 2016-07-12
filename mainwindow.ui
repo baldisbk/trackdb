@@ -147,6 +147,13 @@
                   </widget>
                  </item>
                  <item>
+                  <widget class="QPushButton" name="autoFileButton">
+                   <property name="text">
+                    <string>Auto add files</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QPushButton" name="moveFileButton">
                    <property name="text">
                     <string>Add known file</string>

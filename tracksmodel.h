@@ -61,6 +61,7 @@ public:
 	QStringList allCategories(QString type) const;
 	QStringList allProperties() const;
 	QStringList allBigProperties() const;
+	QStringList allFiles() const;
 
 	Property* propertyType(QString prop) const;
 

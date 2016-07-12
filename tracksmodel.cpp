@@ -227,6 +227,11 @@ QStringList TracksModel::allBigProperties() const
 	return mBigProps;
 }
 
+QStringList TracksModel::allFiles() const
+{
+	return mFileIds.keys();
+}
+
 Property *TracksModel::propertyType(QString prop) const
 {
 	return mProperties.value(prop, NULL);
@@ -282,16 +287,8 @@ QVariant TracksModel::data(const QModelIndex &index, int role) const
 		}
 		break;
 	case Qt::ForegroundRole:
-		switch (rec->fill()) {
-		case noInfoState:
-		case oneFileState:
+		if (rec->changed())
 			return QColor(Qt::red);
-		case noFileState:
-			return QColor(Qt::lightGray);
-		case noMinusState:
-			return QColor(Qt::darkGray);
-		default:;
-		}
 		break;
 	case Qt::DecorationRole:
 		if (index.column() == stateColumn)
@@ -405,6 +402,7 @@ void TracksModel::loadDB()
 			bool found = false;
 			foreach(Record* r, mTracks) {
 				if (r->match(file) && r->addFile(file)) {
+					r->setChanged();
 					found = true;
 					file->mTrack = r->id();
 					break;
@@ -415,6 +413,7 @@ void TracksModel::loadDB()
 				mTracks[rec->id()] = rec;
 				mTrackIds.append(rec->id());
 				file->mTrack = rec->id();
+				rec->setChanged();
 			}
 		} else {
 			bool nomain = rec->main().isEmpty();
@@ -510,6 +509,7 @@ void TracksModel::scanPath(const QString &path)
 			if (rec->match(newFile) && rec->addFile(newFile)) {
 				found = true;
 				newFile->mTrack = rec->id();
+				rec->setChanged();
 				break;
 			}
 		}
@@ -723,6 +723,7 @@ void TracksModel::saveRecord()
 		else
 			newrec->mFill = fullState;
 		mSelectedTrack->mId = id;
+		mSelectedTrack->mChanged = false;
 		*newrec = *mSelectedTrack;
 		mTrackIds.append(id);
 		endInsertRows();
@@ -734,6 +735,7 @@ void TracksModel::saveRecord()
 			Record* newrec = new Record;
 			mTracks[id] = newrec;
 			mSelectedTrack->mId = id;
+			mSelectedTrack->mChanged = false;
 			*newrec = *mSelectedTrack;
 			if (newrec->main() == 0)
 				newrec->mFill = noFileState;
@@ -755,6 +757,7 @@ void TracksModel::saveRecord()
 			// this is an existing record
 			updateTrack(mSelectedTrack, origin);
 			int ind = mTrackIds.indexOf(origin->id());
+			mSelectedTrack->mChanged = false;
 			*origin = *mSelectedTrack;
 			emit dataChanged(index(ind, 0), index(ind, columnCount()-1));
 		}
@@ -796,8 +799,8 @@ void TracksModel::saveRecord()
 			qUpdFile.exec();
 		}
 	}
-	mSelectedTrack->mChanged = false;
 	emit recordSelected(mSelectedTrack);
+	emit recordChanged();
 }
 
 void TracksModel::revertRecord()
@@ -810,8 +813,9 @@ void TracksModel::revertRecord()
 	} else {
 		Record* origin = mTracks[mSelectedTrack->id()];
 		*mSelectedTrack = *origin;
+		mSelectedTrack->mChanged = false;
+		origin->mChanged = false;
 	}
-	mSelectedTrack->mChanged = false;
 	emit recordSelected(mSelectedTrack);
 }
 
@@ -842,7 +846,7 @@ void TracksModel::playFile(const QString &file)
 void TracksModel::updateRecord()
 {
 	if (mSelectedTrack)
-		mSelectedTrack->mChanged = true;
+		mSelectedTrack->setChanged();
 	emit recordChanged();
 }
 

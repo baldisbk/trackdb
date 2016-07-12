@@ -55,6 +55,7 @@ private slots:
 	void onAddFile();
 	void onMoveFile();
 	void onDeleteFile();
+	void onAutoFile();
 	void onSetStorage();
 	void onImport();
 	void onExport();

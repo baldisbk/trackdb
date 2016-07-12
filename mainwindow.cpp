@@ -76,6 +76,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->actionFilterFullInfo, SIGNAL(toggled(bool)), this, SLOT(onIFFilter(bool)));
 	connect(ui->actionFilterInfoOnly, SIGNAL(toggled(bool)), this, SLOT(onIFilter(bool)));
 	ui->actionFilterFullInfo->setChecked(true);
+	ui->actionFilterInfoOnly->setChecked(true);
 
 	connect(ui->addTagButton, SIGNAL(clicked(bool)), this, SLOT(onAddTag()));
 	connect(ui->removeTagButton, SIGNAL(clicked(bool)), this, SLOT(onRemoveTag()));
@@ -83,6 +84,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->addFileButton, SIGNAL(clicked(bool)), this, SLOT(onAddFile()));
 	connect(ui->deleteFileButton, SIGNAL(clicked(bool)), this, SLOT(onDeleteFile()));
 	connect(ui->moveFileButton, SIGNAL(clicked(bool)), this, SLOT(onMoveFile()));
+	connect(ui->autoFileButton, SIGNAL(clicked(bool)), this, SLOT(onAutoFile()));
 	// no logic yet
 	ui->deleteFileButton->setVisible(false);
 	ui->moveFileButton->setVisible(false);
@@ -246,6 +248,8 @@ void MainWindow::onRemoveTag()
 
 void MainWindow::onAddFile()
 {
+	if (!mSelected)
+		return;
 	QStringList res = QFileDialog::getOpenFileNames(
 		this,
 		"Select one or more files to add",
@@ -268,6 +272,8 @@ void MainWindow::onAddFile()
 
 void MainWindow::onMoveFile()
 {
+	if (!mSelected)
+		return;
 	QStringList files;
 	// TODO
 	foreach(QString file, files)
@@ -276,7 +282,21 @@ void MainWindow::onMoveFile()
 
 void MainWindow::onDeleteFile()
 {
+	if (!mSelected)
+		return;
 	// TODO
+}
+
+void MainWindow::onAutoFile()
+{
+	if (!mSelected)
+		return;
+	QStringList files = mTracks->allFiles();
+	foreach(QString file, files) {
+		File* f = mTracks->fileForName(file);
+		if (f && mSelected->match(f))
+			mTracks->addFile(file);
+	}
 }
 
 void MainWindow::onSetStorage()
