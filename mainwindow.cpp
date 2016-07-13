@@ -18,6 +18,7 @@
 #include "filtermodel.h"
 #include "combocheckboxdelegate.h"
 #include "printthread.h"
+#include "printselectdialog.h"
 
 #include <QDebug>
 
@@ -44,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	mProgress->setWindowTitle(tr("Resistance is futile"));
 
 	mPrinter = new PrintHelper(this);
+	mPrintDialog = new PrintSelectDialog(this);
 
 	mTracks = new TracksModel(this);
 	mFiles = new FilesModel(mTracks, this);
@@ -138,6 +140,10 @@ void MainWindow::save()
 	settings.setValue("lastadd", mLastOpenPath);
 	settings.setValue("lastimp", mLastExpImpPath);
 	settings.endGroup();
+
+	settings.beginGroup("PRINT");
+	settings.setValue("checked", mPrintSelected);
+	settings.endGroup();
 }
 
 void MainWindow::load()
@@ -166,6 +172,10 @@ void MainWindow::load()
 	mStoragePath = settings.value("storage").toString();
 	mLastOpenPath = settings.value("lastadd").toString();
 	mLastExpImpPath = settings.value("lastimp").toString();
+	settings.endGroup();
+
+	settings.beginGroup("PRINT");
+	mPrintSelected = settings.value("checked").toStringList();
 	settings.endGroup();
 
 	if (mStoragePath.isEmpty()) {
@@ -400,8 +410,14 @@ void MainWindow::onExport()
 void MainWindow::onPrint()
 {
 	if (!mSelected) return;
-	// TODO select property
-	mPrinter->print(mTracks->printHtml());
+	mPrintDialog->setSelected(mPrintSelected);
+	if (mPrintDialog->exec()) {
+		QStringList docs;
+		mPrintSelected = mPrintDialog->selected();
+		foreach(QString prop, mPrintSelected)
+			docs.append(mTracks->printHtml(prop));
+		mPrinter->print(docs);
+	}
 }
 
 void MainWindow::onIFilter(bool on)
@@ -481,6 +497,10 @@ void MainWindow::onDBChanged()
 	filters.prepend(tr("Title"));
 	ui->filterTypeComboBox->clear();
 	ui->filterTypeComboBox->addItems(filters);
+
+	mPrintDialog->clear();
+	foreach(QString prop, mTracks->allBigProperties())
+		mPrintDialog->addOption(prop);
 }
 
 void MainWindow::onTagsChanged()

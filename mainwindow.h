@@ -17,6 +17,7 @@ class TagsModel;
 class FilterModel;
 class Record;
 class PrintHelper;
+class PrintSelectDialog;
 
 class MainWindow : public QMainWindow
 {
@@ -98,6 +99,8 @@ private:
 	QMap<QString, QTextEdit*> mBigProps;
 
 	PrintHelper* mPrinter;
+	PrintSelectDialog* mPrintDialog;
+	QStringList mPrintSelected;
 };
 
 #endif // MAINWINDOW_H

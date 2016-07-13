@@ -7,10 +7,10 @@
 
 class PrintThread : public QThread {
 public:
-	PrintThread(const QString& text, QPrinter* printer);
+	PrintThread(const QStringList& texts, QPrinter* printer);
 	void run();
 private:
-	QString mText;
+	QStringList mTexts;
 	QPrinter *mPrinter;
 };
 
@@ -20,7 +20,7 @@ public:
 	PrintHelper(QObject* parent = NULL);
 	~PrintHelper();
 
-	bool print(QString text);
+	bool print(QStringList texts);
 
 signals:
 	void printFinished();
