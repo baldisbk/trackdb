@@ -17,6 +17,7 @@
 #include "tagsmodel.h"
 #include "filtermodel.h"
 #include "combocheckboxdelegate.h"
+#include "printthread.h"
 
 #include <QDebug>
 
@@ -41,6 +42,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	mProgress = new QProgressDialog(this);
 	mProgress->setWindowTitle(tr("Resistance is futile"));
+
+	mPrinter = new PrintHelper(this);
 
 	mTracks = new TracksModel(this);
 	mFiles = new FilesModel(mTracks, this);
@@ -73,6 +76,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	connect(ui->actionPlayTrack, SIGNAL(triggered(bool)), this, SLOT(onPlayPlus()));
 	connect(ui->actionPlayTrackMinus, SIGNAL(triggered(bool)), this, SLOT(onPlayMinus()));
+	connect(ui->actionPrint, SIGNAL(triggered(bool)), this, SLOT(onPrint()));
 
 	connect(ui->actionAddFolder, SIGNAL(triggered(bool)), this, SLOT(onSetStorage()));
 	connect(ui->actionExport, SIGNAL(triggered(bool)), this, SLOT(onExport()));
@@ -395,7 +399,9 @@ void MainWindow::onExport()
 
 void MainWindow::onPrint()
 {
-	// TODO
+	if (!mSelected) return;
+	// TODO select property
+	mPrinter->print(mTracks->printHtml());
 }
 
 void MainWindow::onIFilter(bool on)

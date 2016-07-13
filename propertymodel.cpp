@@ -89,9 +89,13 @@ QVariant PropertyModel::data(const QModelIndex &index, int role) const
 			return QVariant();
 		case tagsRow:
 			return mDatabase->allTags();
-		default:
-			return mDatabase->allCategories(
-				mPropNames[index.row() - fixedRowNumber]);
+		default: {
+			QString pName = mPropNames[index.row() - fixedRowNumber];
+			if (mDatabase->propertyType(pName)->type == Property::Category)
+				return mDatabase->allCategories(pName);
+			else
+				return QVariant();
+		}
 		}
 	}
 	return QVariant();

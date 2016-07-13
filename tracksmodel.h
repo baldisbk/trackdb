@@ -56,6 +56,8 @@ public:
 	bool addTag(QString tag);	// both new and existing
 	bool removeTag(QString tag);
 
+	QString printHtml(QString property = QString()) const;
+
 	// for tables
 	QStringList allTags() const;
 	QStringList allCategories(QString type) const;

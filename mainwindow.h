@@ -16,6 +16,7 @@ class PropertyModel;
 class TagsModel;
 class FilterModel;
 class Record;
+class PrintHelper;
 
 class MainWindow : public QMainWindow
 {
@@ -95,6 +96,8 @@ private:
 	FilterModel* mFilter;
 
 	QMap<QString, QTextEdit*> mBigProps;
+
+	PrintHelper* mPrinter;
 };
 
 #endif // MAINWINDOW_H

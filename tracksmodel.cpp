@@ -208,6 +208,42 @@ bool TracksModel::removeTag(QString tag)
 	return true;
 }
 
+QString TracksModel::printHtml(QString property) const
+{
+	if (!mSelectedTrack)
+		return QString();
+	QString res;
+	res += "<html><body>";
+	if (!property.isEmpty()) {
+		res += mSelectedTrack->property(property).toString();
+		res += "</body></html>";
+		return res;
+	}
+	res += "<table cellspacing=0 cellpadding=2 border=1>";
+	res += "<tr>";
+	res += "<td>";
+	res += "Header";
+	res += "</td>";
+	res += "</tr>";
+	foreach (Property* prop, mProperties) {
+		if (prop->type == Property::Big) continue;
+		QVariant val = mSelectedTrack->property(prop->name);
+		if (val.isNull()) continue;
+		QString strval;
+		if (val.type() == QVariant::String)
+			strval = val.toString();
+		if (val.type() == QVariant::StringList)
+			strval = val.toStringList().join(", ");
+		res += "<tr><td><b>";
+		res += prop->name;
+		res += "</b></td><td>";
+		res += strval;
+		res += "</td></tr>";
+	}
+	res += "</table></font></body></html>";
+	return res;
+}
+
 QStringList TracksModel::allTags() const
 {
 	return mCatTags.value(QString());
@@ -913,7 +949,7 @@ File *TracksModel::readFile(QString filename)
 		else if (tagname != "File" && tagname != "Metadata") {
 			if (!mOrdProps.contains(tagname)) {
 				if (!mProperties.contains(tagname)) {
-					qAddProp.bindValue(":album", file->album);
+					qAddProp.bindValue(":name", tagname);
 					qAddProp.exec();
 					Property* prop = new Property;
 					prop->mId = qAddProp.lastInsertId().toInt();

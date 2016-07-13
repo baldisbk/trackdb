@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql
+QT       += core gui sql printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     filtermodel.cpp \
     checklistcombobox.cpp \
     checklistmodel.cpp \
-    combocheckboxdelegate.cpp
+    combocheckboxdelegate.cpp \
+    printthread.cpp
 
 HEADERS  += mainwindow.h \
     tracksmodel.h \
@@ -33,7 +34,8 @@ HEADERS  += mainwindow.h \
     filtermodel.h \
     checklistcombobox.h \
     checklistmodel.h \
-    combocheckboxdelegate.h
+    combocheckboxdelegate.h \
+    printthread.h
 
 FORMS    += mainwindow.ui
 
