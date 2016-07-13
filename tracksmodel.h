@@ -98,6 +98,8 @@ protected:
 	int insertTrack();
 	void updateTrack(Record* rec, Record *origin);
 
+	void fillFile(File *file);
+
 private:
 	QMap<int, Record*> mTracks;
 	QMap<int, File*> mFiles;

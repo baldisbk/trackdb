@@ -433,14 +433,28 @@ void TracksModel::loadDB()
 		file->filename = qSelectFiles.value(4).toString();
 		file->mTrack = qSelectFiles.value(5).toInt();
 		file->lastPlayed = qSelectFiles.value(6).toDateTime();
+		if (file->track() <= 0)
+			fillFile(file);
 
 		Record* rec = mTracks.value(file->track(), NULL);
 		if (!rec) {
-			rec = new Record(file, -mTracks.size() - 1);
-			mTracks[rec->id()] = rec;
-			mTrackIds.append(rec->id());
-			file->mTrack = rec->id();
-			rec->setChanged();
+			bool found = false;
+			foreach(Record* rec, mTracks) {
+				if (rec->id() >= 0) continue;
+				if (rec->match(file) && rec->addFile(file)) {
+					found = true;
+					file->mTrack = rec->id();
+					rec->setChanged();
+					break;
+				}
+			}
+			if (!found) {
+				rec = new Record(file, -mTracks.size() - 1);
+				mTracks[rec->id()] = rec;
+				mTrackIds.append(rec->id());
+				file->mTrack = rec->id();
+				rec->setChanged();
+			}
 		} else {
 			bool nomain = rec->prime().isEmpty();
 			bool nominus = rec->minus().isEmpty();
@@ -906,16 +920,9 @@ void TracksModel::updateRecord()
 	emit recordChanged();
 }
 
-File *TracksModel::readFile(QString filename)
+void TracksModel::fillFile(File* file)
 {
-	if (mFileIds.contains(filename))
-		return mFiles[mFileIds[filename]];
-
 	QSqlDatabase db = QSqlDatabase::database();
-	QSqlQuery qAddFile(db);
-	qAddFile.prepare(
-		"INSERT INTO file (filename, title, artist, album) "
-		"VALUES (:filename, :title, :artist, :album)");
 
 	QSqlQuery qAddProp(db);
 	qAddProp.prepare(
@@ -923,16 +930,13 @@ File *TracksModel::readFile(QString filename)
 		"VALUES (:name, 0, 0)");
 
 	QProcess prc;
-	prc.start("./id3", QStringList() << filename);
+	prc.start("./id3", QStringList() << file->filename);
 	if (!prc.waitForStarted() || !prc.waitForFinished()) {
-		return NULL;
+		return;
 	}
 
 	QByteArray res = prc.readAll();
 	QStringList lines = QString::fromLocal8Bit(res).split('\n');
-
-	File* file = new File;
-	file->filename = filename;
 
 	foreach(QString line, lines) {
 		int split = line.indexOf(":");
@@ -940,6 +944,8 @@ File *TracksModel::readFile(QString filename)
 			continue;
 		QString tagname = line.left(split);
 		QString tagvalue = line.remove(0, split+1).simplified();
+		if (tagname.isEmpty() || tagvalue.isEmpty())
+			continue;
 		if (tagname == "Title")
 			file->title = tagvalue;
 		else if (tagname == "Artist")
@@ -964,17 +970,42 @@ File *TracksModel::readFile(QString filename)
 				file->tags[tagname] = tagvalue;
 		}
 	}
+}
 
-	qAddFile.bindValue(":filename", filename);
-	qAddFile.bindValue(":title", file->title);
-	qAddFile.bindValue(":artist", file->artist);
-	qAddFile.bindValue(":album", file->album);
-	qAddFile.exec();
+File *TracksModel::readFile(QString filename)
+{
+	File* file = NULL;
+	bool hasFile = false;
+	if (mFileIds.contains(filename)) {
+		file = mFiles[mFileIds[filename]];
+		hasFile = true;
+		if (file->track() != 0)
+			return file;
+	}
 
-	file->mId = qAddFile.lastInsertId().toInt();
+	QSqlDatabase db = QSqlDatabase::database();
+	QSqlQuery qAddFile(db);
+	qAddFile.prepare(
+		"INSERT INTO file (filename, title, artist, album) "
+		"VALUES (:filename, :title, :artist, :album)");
 
-	mFiles[file->id()] = file;
-	mFileIds[file->filename] = file->id();
+	if (!file)
+		file = new File;
+	file->filename = filename;
+	fillFile(file);
+
+	if (!hasFile) {
+		qAddFile.bindValue(":filename", filename);
+		qAddFile.bindValue(":title", file->title);
+		qAddFile.bindValue(":artist", file->artist);
+		qAddFile.bindValue(":album", file->album);
+		qAddFile.exec();
+
+		file->mId = qAddFile.lastInsertId().toInt();
+
+		mFiles[file->id()] = file;
+		mFileIds[file->filename] = file->id();
+	}
 
 	return file;
 }
