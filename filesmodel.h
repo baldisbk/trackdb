@@ -31,6 +31,8 @@ public:
 	virtual Qt::ItemFlags flags(const QModelIndex &index) const;
 	virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
+	QString fileForIndex(const QModelIndex& index) const;
+
 public slots:
 	void setRecord(Record* rec);
 

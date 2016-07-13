@@ -114,3 +114,11 @@ QVariant FilesModel::headerData(int section, Qt::Orientation orientation, int ro
 	}
 	return QVariant();
 }
+
+QString FilesModel::fileForIndex(const QModelIndex &ind) const
+{
+	if (!mRecord || ind.row() < 0 || ind.row() >= mRecord->files().size())
+		return QString();
+
+	return mRecord->files()[ind.row()];
+}

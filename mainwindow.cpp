@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	db.open();
 
 	mProgress = new QProgressDialog(this);
+	mProgress->setWindowTitle(tr("Resistance is futile"));
 
 	mTracks = new TracksModel(this);
 	mFiles = new FilesModel(mTracks, this);
@@ -62,6 +63,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(mTracks, SIGNAL(tagsChanged()), this, SLOT(onTagsChanged()));
 	connect(mTracks, SIGNAL(recordChanged()), this, SLOT(onRecordChanged()));
 	connect(mTracks, SIGNAL(recordSelected(Record*)), this, SLOT(onRecordChanged()));
+
+	connect(ui->filesView, SIGNAL(doubleClicked(QModelIndex)),
+		this, SLOT(onFileActivated(QModelIndex)));
 
 	connect(ui->actionSaveTrack, SIGNAL(triggered(bool)), mTracks, SLOT(saveRecord()));
 	connect(ui->actionNewTrack, SIGNAL(triggered(bool)), mTracks, SLOT(newRecord()));
@@ -108,7 +112,8 @@ void MainWindow::save()
 	QSettings settings;
 
 	settings.beginGroup("GUI");
-	settings.setValue("mainwindow", saveState());
+	settings.setValue("mwgeom", saveGeometry());
+	settings.setValue("mwstate", saveState());
 	settings.setValue("tracktable", ui->dbView->horizontalHeader()->saveState());
 	settings.setValue("proptable", ui->propertyView->horizontalHeader()->saveState());
 	settings.setValue("filestable", ui->filesView->horizontalHeader()->saveState());
@@ -136,7 +141,8 @@ void MainWindow::load()
 	QSettings settings;
 
 	settings.beginGroup("GUI");
-	restoreState(settings.value("mainwindow").toByteArray());
+	restoreGeometry(settings.value("mwgeom").toByteArray());
+	restoreState(settings.value("mwstate").toByteArray());
 	ui->dbView->horizontalHeader()->restoreState(settings.value("tracktable").toByteArray());
 	ui->propertyView->horizontalHeader()->restoreState(settings.value("proptable").toByteArray());
 	ui->filesView->horizontalHeader()->restoreState(settings.value("filestable").toByteArray());
@@ -203,7 +209,7 @@ void MainWindow::onSelected(Record* rec)
 		return;
 	}
 	foreach (QString prop, bigprops)
-		mBigProps[prop]->setPlainText(
+		mBigProps[prop]->setHtml(
 					mSelected->property(prop).toString());
 }
 
@@ -263,6 +269,13 @@ void MainWindow::onFilterChanged()
 void MainWindow::onTrackSelected(QModelIndex index)
 {
 	mTracks->selectRecord(mFilter->mapToSource(index));
+}
+
+void MainWindow::onFileActivated(QModelIndex index)
+{
+	QString file = mFiles->fileForIndex(index);
+	if (!file.isEmpty())
+		play(file);
 }
 
 void MainWindow::onPlayPlus()
@@ -356,7 +369,7 @@ void MainWindow::onSetStorage()
 {
 	if (!mStoragePath.isEmpty()) {
 		if (QMessageBox::warning(
-			this, tr("Resistance is futile"),
+			this, tr("All your base are belong to us"),
 			tr("All old files will be removed from database! Continue?"),
 			QMessageBox::Ok | QMessageBox::Cancel) ==
 				QMessageBox::Cancel)
@@ -409,14 +422,17 @@ void MainWindow::onBigPropertyEdited()
 	QString prop = sender()->property("propname").toString();
 	if (prop.isEmpty())
 		return;
-	if (mSelected->setProperty(prop, mBigProps[prop]->toPlainText()))
+	if (mSelected->setProperty(prop, mBigProps[prop]->toHtml()))
 		mTracks->updateRecord();
 }
 
 void MainWindow::play(QString file)
 {
 	QUrl url = QUrl::fromLocalFile(file);
-	QDesktopServices::openUrl(url);
+	if (!QDesktopServices::openUrl(url))
+		QMessageBox::critical(this, tr("He is dead, Jim"),
+			tr("There was an error\n"
+			   "Probably there's no appropriate application"));
 	mTracks->playFile(file);
 }
 
@@ -443,7 +459,7 @@ void MainWindow::onDBChanged()
 		QWidget* page = new QWidget(ui->tabWidget);
 		QVBoxLayout* layout = new QVBoxLayout(page);
 		page->setLayout(layout);
-		QPlainTextEdit* editor = new QPlainTextEdit(page);
+		QTextEdit* editor = new QTextEdit(page);
 		layout->addWidget(editor);
 		ui->tabWidget->addTab(page, prop);
 		mBigProps[prop] = editor;

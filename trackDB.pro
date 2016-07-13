@@ -38,7 +38,10 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui
 
 DISTFILES += \
-    schema.sql
+    schema.sql \
+    icon.rc
 
 RESOURCES += \
     pics.qrc
+
+RC_FILE = icon.rc

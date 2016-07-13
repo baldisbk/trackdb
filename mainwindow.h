@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QProgressDialog>
-#include <QPlainTextEdit>
+#include <QTextEdit>
 #include <QModelIndex>
 
 namespace Ui {
@@ -48,6 +48,7 @@ private slots:
 	void onFilterSelected();
 	void onFilterChanged();
 	void onTrackSelected(QModelIndex index);
+	void onFileActivated(QModelIndex index);
 	void onBigPropertyEdited();
 
 	// action slots
@@ -93,7 +94,7 @@ private:
 	TagsModel* mTags;
 	FilterModel* mFilter;
 
-	QMap<QString, QPlainTextEdit*> mBigProps;
+	QMap<QString, QTextEdit*> mBigProps;
 };
 
 #endif // MAINWINDOW_H
