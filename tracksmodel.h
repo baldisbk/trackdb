@@ -71,6 +71,7 @@ public slots:
 	void loadDB();
 	void clearFiles();
 	void scanPath(const QString& path);
+	void importDB(const QString& path);
 
 	void selectRecord(const QModelIndex& index);
 	void saveRecord();
@@ -99,6 +100,8 @@ protected:
 	void updateTrack(Record* rec, Record *origin);
 
 	void fillFile(File *file);
+
+	bool checkChanges();
 
 private:
 	QMap<int, Record*> mTracks;

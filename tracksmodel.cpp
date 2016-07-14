@@ -3,6 +3,7 @@
 #include <QColor>
 #include <QDir>
 #include <QIcon>
+#include <QMessageBox>
 
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -596,9 +597,43 @@ void TracksModel::scanPath(const QString &path)
 	endResetModel();
 }
 
+void TracksModel::importDB(const QString &path)
+{
+	// TODO
+}
+
+bool TracksModel::checkChanges()
+{
+	if (mSelectedTrack && mSelectedTrack->changed()) {
+		QMessageBox::StandardButton btn =
+			QMessageBox::question(
+				dynamic_cast<QWidget*>(QObject::parent()),
+				tr("Who are you? What do you want?"),
+				tr("You have made changes to selected record. "
+					"Do you want to save changes?"),
+				QMessageBox::Discard | QMessageBox::Save
+					/*| QMessageBox::Cancel*/);
+		switch (btn) {
+		case QMessageBox::Discard:
+			revertRecord();
+			break;
+		case QMessageBox::Save:
+			saveRecord();
+			break;
+		case QMessageBox::Cancel: {
+			// save to origin, dont save to DB
+			// TODO it l8r
+		}
+		default:;
+		}
+	}
+	return true;
+}
+
 void TracksModel::selectRecord(const QModelIndex &index)
 {
-	// TODO ask for changes
+	if (!checkChanges())
+		; // TODO return selection
 	Record* origin = recordForIndex(index);
 	Record* newrec = NULL;
 	if (origin) {
@@ -891,7 +926,8 @@ void TracksModel::revertRecord()
 
 void TracksModel::newRecord()
 {
-	// TODO ask for changes
+	if (!checkChanges())
+		return;
 	Record* newrec = new Record;
 	emit recordSelected(newrec);
 	if (mSelectedTrack)
