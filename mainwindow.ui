@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>668</width>
-    <height>476</height>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -288,6 +288,7 @@
    <addaction name="actionAddFolder"/>
    <addaction name="actionImport"/>
    <addaction name="actionExport"/>
+   <addaction name="actionSettings"/>
    <addaction name="separator"/>
    <addaction name="actionFilterFilesOnly"/>
    <addaction name="actionFilterInfoOnly"/>
@@ -428,6 +429,15 @@
    </property>
    <property name="text">
     <string>Undo changes</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset resource="pics.qrc">
+     <normaloff>:/pics/settings.png</normaloff>:/pics/settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>Settings</string>
    </property>
   </action>
  </widget>

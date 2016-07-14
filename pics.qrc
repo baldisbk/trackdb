@@ -16,5 +16,6 @@
         <file>pics/storage.png</file>
         <file>pics/export.png</file>
         <file>pics/revert.png</file>
+        <file>pics/settings.png</file>
     </qresource>
 </RCC>

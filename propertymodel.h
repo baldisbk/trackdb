@@ -47,6 +47,7 @@ public:
 
 public slots:
 	void updateRowList();
+	void updateRecord();
 	void setRecord(Record *rec);
 
 signals:

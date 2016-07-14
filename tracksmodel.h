@@ -53,6 +53,9 @@ public:
 	bool removeFile(QString file);
 	File* fileForName(QString file);
 
+	bool addNewTag(QString tag, QString prop);
+	bool deleteDbTag(QString tag);
+
 	bool addTag(QString tag);	// both new and existing
 	bool removeTag(QString tag);
 
@@ -66,6 +69,7 @@ public:
 	QStringList allFiles() const;
 
 	Property* propertyType(QString prop) const;
+	bool addProperty(QString name, Property::Type type);
 
 public slots:
 	void loadDB();

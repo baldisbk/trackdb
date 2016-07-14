@@ -18,6 +18,7 @@ class FilterModel;
 class Record;
 class PrintHelper;
 class PrintSelectDialog;
+class SettingsDialog;
 
 class MainWindow : public QMainWindow
 {
@@ -66,6 +67,7 @@ private slots:
 	void onImport();
 	void onExport();
 	void onPrint();
+	void onSettings();
 
 	void onIFilter(bool on);
 	void onFFilter(bool on);
@@ -101,6 +103,8 @@ private:
 	PrintHelper* mPrinter;
 	PrintSelectDialog* mPrintDialog;
 	QStringList mPrintSelected;
+
+	SettingsDialog* mSettings;
 };
 
 #endif // MAINWINDOW_H

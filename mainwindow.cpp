@@ -19,6 +19,7 @@
 #include "combocheckboxdelegate.h"
 #include "printthread.h"
 #include "printselectdialog.h"
+#include "settingsdialog.h"
 
 #include <QDebug>
 
@@ -54,6 +55,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	mFilter = new FilterModel(this);
 	mFilter->setSourceModel(mTracks);
 
+	mSettings = new SettingsDialog(mTracks, this);
+
 	connect(mTracks, SIGNAL(progressStart(int,QString)),
 		this, SLOT(onProgressInit(int,QString)));
 	connect(mTracks, SIGNAL(progress(int)), mProgress, SLOT(setValue(int)));
@@ -83,6 +86,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->actionAddFolder, SIGNAL(triggered(bool)), this, SLOT(onSetStorage()));
 	connect(ui->actionExport, SIGNAL(triggered(bool)), this, SLOT(onExport()));
 	connect(ui->actionImport, SIGNAL(triggered(bool)), this, SLOT(onImport()));
+	connect(ui->actionSettings, SIGNAL(triggered(bool)), this, SLOT(onSettings()));
 
 	connect(ui->actionFilterFilesOnly, SIGNAL(toggled(bool)), this, SLOT(onFFilter(bool)));
 	connect(ui->actionFilterFullInfo, SIGNAL(toggled(bool)), this, SLOT(onIFFilter(bool)));
@@ -418,6 +422,11 @@ void MainWindow::onPrint()
 			docs.append(mTracks->printHtml(prop));
 		mPrinter->print(docs);
 	}
+}
+
+void MainWindow::onSettings()
+{
+	mSettings->show();
 }
 
 void MainWindow::onIFilter(bool on)

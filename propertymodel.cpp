@@ -6,6 +6,7 @@ PropertyModel::PropertyModel(TracksModel *database, QObject *parent):
 	QAbstractItemModel(parent), mDatabase(database), mRecord(NULL)
 {
 	connect(mDatabase, SIGNAL(dbChanged()), this, SLOT(updateRowList()));
+	connect(mDatabase, SIGNAL(recordChanged()), this, SLOT(updateRecord()));
 	connect(mDatabase, SIGNAL(recordSelected(Record*)),
 		this, SLOT(setRecord(Record*)));
 	updateRowList();
@@ -158,6 +159,11 @@ void PropertyModel::updateRowList()
 	beginResetModel();
 	mPropNames = mDatabase->allProperties();
 	endResetModel();
+}
+
+void PropertyModel::updateRecord()
+{
+	setRecord(mRecord);
 }
 
 void PropertyModel::setRecord(Record *rec)

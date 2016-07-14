@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     checklistmodel.cpp \
     combocheckboxdelegate.cpp \
     printthread.cpp \
-    printselectdialog.cpp
+    printselectdialog.cpp \
+    settingsdialog.cpp
 
 HEADERS  += mainwindow.h \
     tracksmodel.h \
@@ -37,10 +38,12 @@ HEADERS  += mainwindow.h \
     checklistmodel.h \
     combocheckboxdelegate.h \
     printthread.h \
-    printselectdialog.h
+    printselectdialog.h \
+    settingsdialog.h
 
 FORMS    += mainwindow.ui \
-    printselectdialog.ui
+    printselectdialog.ui \
+    settingsdialog.ui
 
 DISTFILES += \
     schema.sql \

@@ -166,31 +166,85 @@ File *TracksModel::fileForName(QString file)
 		return NULL;
 }
 
-bool TracksModel::addTag(QString tag)
+bool TracksModel::addNewTag(QString tag, QString prop)
 {
-	if (!mSelectedTrack)
-		return false;
 	if (mTags.contains(tag)) {
-		if (!allTags().contains(tag))
+		if (!allCategories(prop).contains(tag))
 			return false;
 	} else {
+		Property* p = mProperties.value(prop, NULL);
+		if (!p && !prop.isEmpty())
+			return false;
+
 		Tag* t = new Tag;
 		t->name = tag;
+		t->type = prop;
 
 		QSqlDatabase db = QSqlDatabase::database();
 
 		QSqlQuery qAddTag(db);
 		qAddTag.prepare(
-			"INSERT INTO tag (tag, property) VALUES (:tag, 0)");
+			"INSERT INTO tag (tag, property) VALUES (:tag, :prop)");
 		qAddTag.bindValue(":tag", tag);
+		qAddTag.bindValue(":prop", p ? p->id() : 0);
 		qAddTag.exec();
 
 		t->mId = qAddTag.lastInsertId().toInt();
 
 		mTags[tag] = t;
-		mCatTags[QString()].append(tag);
+		mCatTags[prop].append(tag);
 		emit tagsChanged();
 	}
+	return true;
+}
+
+bool TracksModel::deleteDbTag(QString tag)
+{
+	if (!mTags.contains(tag))
+		return false;
+
+	Tag* t = mTags[tag];
+	int id = t->id();
+	mCatTags[t->type].removeAll(tag);
+	mTags.remove(tag);
+
+	foreach (Record* rec, mTracks) {
+		if (rec->mCategories.contains(t->type))
+			rec->mCategories[t->type].removeAll(tag);
+		else
+			rec->mTags.removeAll(tag);
+	}
+	if (mSelectedTrack) {
+		if (mSelectedTrack->mCategories.contains(t->type))
+			mSelectedTrack->mCategories[t->type].removeAll(tag);
+		else
+			mSelectedTrack->mTags.removeAll(tag);
+	}
+
+	QSqlDatabase db = QSqlDatabase::database();
+
+	QSqlQuery qDelTag(db);
+	qDelTag.prepare("DELETE FROM tag where tag=:tag");
+	qDelTag.bindValue(":tag", tag);
+	qDelTag.exec();
+
+	QSqlQuery qDelTrackTag(db);
+	qDelTrackTag.prepare("DELETE FROM tracktag where tag=:tag");
+	qDelTrackTag.bindValue(":tag", id);
+	qDelTrackTag.exec();
+
+	emit tagsChanged();
+	emit recordChanged();
+
+	return true;
+}
+
+bool TracksModel::addTag(QString tag)
+{
+	if (!mSelectedTrack)
+		return false;
+	if (!addNewTag(tag, QString()))
+		return false;
 	if (mSelectedTrack->tags().contains(tag))
 		return false;
 	mSelectedTrack->mTags.append(tag);
@@ -273,6 +327,48 @@ QStringList TracksModel::allFiles() const
 Property *TracksModel::propertyType(QString prop) const
 {
 	return mProperties.value(prop, NULL);
+}
+
+bool TracksModel::addProperty(QString name, Property::Type type)
+{
+	QSqlDatabase db = QSqlDatabase::database();
+
+	QSqlQuery qAddProp(db);
+	qAddProp.prepare(
+		"INSERT INTO property (name, big, fixed) "
+		"VALUES (:name, :b, :f)");
+
+	if (!mProperties.contains(name)) {
+		bool b = false;
+		bool f = false;
+		switch (type) {
+		case Property::Ordinary:
+			mOrdProps.append(name);
+			break;
+		case Property::Big:
+			b = true;
+			mBigProps.append(name);
+			break;
+		case Property::Category:
+			f = true;
+			mCatProps.append(name);
+			break;
+		default:;
+		}
+
+		qAddProp.bindValue(":name", name);
+		qAddProp.bindValue(":b", b);
+		qAddProp.bindValue(":f", f);
+		qAddProp.exec();
+		Property* prop = new Property;
+		prop->mId = qAddProp.lastInsertId().toInt();
+		prop->type = type;
+		prop->name = name;
+		mProperties[name] = prop;
+		emit dbChanged();
+		return true;
+	} else
+		return false;
 }
 
 QVariant TracksModel::data(const QModelIndex &index, int role) const
@@ -632,8 +728,7 @@ bool TracksModel::checkChanges()
 
 void TracksModel::selectRecord(const QModelIndex &index)
 {
-	if (!checkChanges())
-		; // TODO return selection
+	if (!checkChanges()) {} // TODO return selection
 	Record* origin = recordForIndex(index);
 	Record* newrec = NULL;
 	if (origin) {
@@ -958,13 +1053,6 @@ void TracksModel::updateRecord()
 
 void TracksModel::fillFile(File* file)
 {
-	QSqlDatabase db = QSqlDatabase::database();
-
-	QSqlQuery qAddProp(db);
-	qAddProp.prepare(
-		"INSERT INTO property (name, big, fixed) "
-		"VALUES (:name, 0, 0)");
-
 	QProcess prc;
 	prc.start("./id3", QStringList() << file->filename);
 	if (!prc.waitForStarted() || !prc.waitForFinished()) {
@@ -989,19 +1077,10 @@ void TracksModel::fillFile(File* file)
 		else if (tagname == "Album")
 			file->album = tagvalue;
 		else if (tagname != "File" && tagname != "Metadata") {
-			if (!mOrdProps.contains(tagname)) {
-				if (!mProperties.contains(tagname)) {
-					qAddProp.bindValue(":name", tagname);
-					qAddProp.exec();
-					Property* prop = new Property;
-					prop->mId = qAddProp.lastInsertId().toInt();
-					prop->type = Property::Ordinary;
-					prop->name = tagname;
-					mProperties[tagname] = prop;
-					mOrdProps.append(tagname);
-					emit dbChanged();
-				}
-			}
+			if (!mOrdProps.contains(tagname))
+				addProperty(tagname, Property::Ordinary);
+			// no, it is NOT else,
+			// for addProperty has side effect!
 			if (mOrdProps.contains(tagname))
 				file->tags[tagname] = tagvalue;
 		}
