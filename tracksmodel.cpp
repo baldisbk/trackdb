@@ -509,7 +509,9 @@ void TracksModel::loadDB()
 		trc->title = qSelectTracks.value(1).toString();
 		trc->artist = qSelectTracks.value(2).toString();
 		trc->album = qSelectTracks.value(3).toString();
-		trc->lastChanged = qSelectTracks.value(4).toDateTime();
+		trc->lastChanged = QDateTime::fromString(
+			qSelectTracks.value(4).toString(),
+			"yyyy:MM:dd HH:mm:ss:zzz");
 		trc->mFill = noFileState;
 		mTracks[trc->id()] = trc;
 		mTrackIds.append(trc->id());
@@ -529,7 +531,9 @@ void TracksModel::loadDB()
 		file->album = qSelectFiles.value(3).toString();
 		file->filename = qSelectFiles.value(4).toString();
 		file->mTrack = qSelectFiles.value(5).toInt();
-		file->lastPlayed = qSelectFiles.value(6).toDateTime();
+		file->lastPlayed = QDateTime::fromString(
+			qSelectFiles.value(6).toString(),
+			"yyyy:MM:dd HH:mm:ss:zzz");
 		if (file->track() <= 0)
 			fillFile(file);
 
@@ -550,7 +554,6 @@ void TracksModel::loadDB()
 				mTracks[rec->id()] = rec;
 				mTrackIds.append(rec->id());
 				file->mTrack = rec->id();
-				rec->setChanged();
 			}
 		} else {
 			bool nomain = rec->prime().isEmpty();
@@ -675,7 +678,8 @@ void TracksModel::scanPath(const QString &path)
 			if (rec->match(newFile) && rec->addFile(newFile)) {
 				found = true;
 				newFile->mTrack = rec->id();
-				rec->setChanged();
+				if (rec->id() > 0)
+					rec->setChanged();
 				break;
 			}
 		}
@@ -683,7 +687,6 @@ void TracksModel::scanPath(const QString &path)
 			Record* rec = new Record(newFile, -mTracks.size() - 1);
 			mTracks[rec->id()] = rec;
 			mTrackIds.append(rec->id());
-			rec->setChanged();
 			newFile->mTrack = rec->id();
 		}
 
@@ -695,7 +698,213 @@ void TracksModel::scanPath(const QString &path)
 
 void TracksModel::importDB(const QString &path)
 {
-	// TODO
+	if (!checkChanges()) return;
+
+	if (QSqlDatabase::contains("import"))
+		QSqlDatabase::removeDatabase("import");
+	QSqlDatabase impDb = QSqlDatabase::addDatabase("QSQLITE", "import");
+	impDb.setDatabaseName(path);
+	impDb.open();
+
+	QSqlDatabase db = QSqlDatabase::database();
+	QSqlQuery qInsertProp(db);
+	qInsertProp.prepare(
+		"INSERT INTO property (name, big, fixed) "
+		"VALUES (:name, :big, :fixed)");
+
+	QSqlQuery qSelectProps(impDb);
+	qSelectProps.exec("SELECT id, name, big, fixed FROM property");
+	while(qSelectProps.next()) {
+		QString name = qSelectProps.value(1).toString();
+		if (mProperties.contains(name))
+			continue;
+		Property* prop = new Property;
+		prop->name = name;
+		if (qSelectProps.value(2).toBool()) {
+			prop->type = Property::Big;
+			mBigProps.append(prop->name);
+		} else if (qSelectProps.value(3).toBool()) {
+			prop->type = Property::Category;
+			mCatProps.append(prop->name);
+		} else {
+			prop->type = Property::Ordinary;
+			mOrdProps.append(prop->name);
+		}
+		qInsertProp.bindValue(":name", prop->name);
+		qInsertProp.bindValue(":big", prop->type == Property::Big);
+		qInsertProp.bindValue(":fixed", prop->type == Property::Category);
+		qInsertProp.exec();
+		prop->mId = qInsertProp.lastInsertId().toInt();
+		mProperties[prop->name] = prop;
+	}
+	emit dbChanged();
+
+	QSqlQuery qSelectTags(impDb);
+	qSelectTags.exec(
+		"SELECT tag.id, tag, property.name "
+		"FROM tag LEFT JOIN property ON tag.property=property.id");
+
+	QSqlQuery qInsertTag(db);
+	qInsertTag.prepare(
+		"INSERT INTO tag (tag, property) "
+		"VALUES (:name, :prop, :fixed)");
+	while(qSelectTags.next()) {
+		QString name = qSelectTags.value(1).toString();
+		if (mTags.contains(name))
+			continue;
+		Tag* tag = new Tag;
+		tag->name = name;
+		tag->type = qSelectTags.value(2).toString();
+		mTags[tag->name] = tag;
+		mCatTags[tag->type].append(tag->name);
+
+		qInsertTag.bindValue(":name", tag->name);
+		if (tag->type.isEmpty())
+			qInsertTag.bindValue(":prop", QVariant());
+		else
+			qInsertTag.bindValue(":prop", mProperties[tag->type]->id());
+		qInsertTag.exec();
+		tag->mId = qInsertTag.lastInsertId().toInt();
+	}
+	emit tagsChanged();
+
+
+	QMap<int, Record*> updRecords;
+	QMap<int, Record*> newRecords;
+	QSqlQuery qSelectTracks(impDb);
+	qSelectTracks.exec(
+		"SELECT id, title, artist, album, lastchange FROM track");
+	beginResetModel();
+	while(qSelectTracks.next()) {
+		QString title = qSelectTracks.value(1).toString();
+		QString artist = qSelectTracks.value(2).toString();
+		QString album = qSelectTracks.value(3).toString();
+		QDateTime dt = QDateTime::fromString(
+			qSelectTracks.value(4).toString(),
+			"yyyy:MM:dd HH:mm:ss:zzz");
+		int fId = 0;
+		bool found = false;
+		foreach(Record* rec, mTracks) {
+			if (
+				rec->title == title &&
+				rec->artist == artist &&
+				rec->album == album)
+			{
+				// found...
+				if (!rec->lastChanged.isValid() || rec->lastChanged < dt)
+					fId = rec->id();
+				found = true;
+				break;
+			}
+		}
+
+		if (found && fId == 0)
+			// found is newer, keep it
+			continue;
+
+		Record* trc = new Record;
+		trc->mId = qSelectTracks.value(0).toInt();
+		trc->title = title;
+		trc->artist = artist;
+		trc->album = album;
+		trc->lastChanged = dt;
+		trc->mFill = noFileState;
+		newRecords[trc->id()] = trc;
+		if (fId != 0)
+			updRecords[fId] = trc;
+	}
+
+	QSqlQuery qSelectTagForTrack(impDb);
+	qSelectTagForTrack.exec(
+		"SELECT track.id, tag.tag "
+		"FROM track "
+		"JOIN tracktag ON tracktag.track=track.id "
+		"JOIN tag ON tracktag.tag=tag.id "
+		"WHERE tag.property=0");
+	while(qSelectTagForTrack.next()) {
+		Record *rec = newRecords.value(qSelectTagForTrack.value(0).toInt(), NULL);
+		if (!rec)
+			continue;
+		rec->mTags.append(qSelectTagForTrack.value(1).toString());
+	}
+
+	QSqlQuery qSelectPropForTracks(impDb);
+	qSelectPropForTracks.exec(
+		"SELECT track.id, name, value as val "
+		"FROM track "
+		"JOIN trackproperty ON track.id=trackproperty.track "
+		"JOIN property ON trackproperty.property=property.id ");
+	while(qSelectPropForTracks.next()) {
+		Record *rec = newRecords.value(qSelectPropForTracks.value(0).toInt(), NULL);
+		if (!rec)
+			continue;
+		rec->mProperties[qSelectPropForTracks.value(1).toString()] =
+			qSelectPropForTracks.value(2).toString();
+	}
+
+	QSqlQuery qSelectCatsForTracks(impDb);
+	qSelectCatsForTracks.exec(
+		"SELECT track.id, name, tag.tag as val "
+		"FROM track "
+		"JOIN tracktag ON tracktag.track=track.id "
+		"JOIN tag ON tracktag.tag=tag.id "
+		"JOIN property ON tag.property=property.id"
+		);
+	while(qSelectCatsForTracks.next()) {
+		Record *rec = newRecords.value(qSelectCatsForTracks.value(0).toInt(), NULL);
+		if (!rec)
+			continue;
+		rec->mCategories[qSelectCatsForTracks.value(1).toString()].append(
+			qSelectCatsForTracks.value(2).toString());
+	}	
+
+	// now insert & update
+	QList<int> updIds = updRecords.keys();
+	foreach(int oldId, updIds) {
+		Record* rec = updRecords[oldId];
+		newRecords.remove(rec->id());
+		Record* old = mTracks[oldId];
+		if (old->id() < 0) {
+			int idIndex = mTrackIds.indexOf(oldId);
+			mTracks.remove(oldId);
+			old->mId = insertTrack(old);
+			mTrackIds[idIndex] = old->id();
+			mTracks[old->id()] = old;
+		}
+		rec->mFiles = old->mFiles;
+		rec->mMain = old->mMain;
+		rec->mMinus = old->mMinus;
+		updateTrack(rec, old);
+		switch(old->fill()) {
+		case noInfoState: old->mFill = fullState; break;
+		case oneFileState: old->mFill = noMinusState; break;
+		default:;
+		}
+		old->lastChanged = rec->lastChanged;
+		old->mTags = rec->mTags;
+		old->mProperties = rec->mProperties;
+		old->mCategories = rec->mCategories;
+		old->mChanged = false;
+		if (mSelectedTrack && mSelectedTrack->id() == oldId) {
+			mSelectedTrack->lastChanged = rec->lastChanged;
+			mSelectedTrack->mTags = rec->mTags;
+			mSelectedTrack->mProperties = rec->mProperties;
+			mSelectedTrack->mCategories = rec->mCategories;
+			mSelectedTrack->mChanged = false;
+			emit recordSelected(mSelectedTrack);
+			emit recordChanged();
+		}
+	}
+	foreach(Record* rec, newRecords) {
+		rec->mId = insertTrack(rec);
+		mTrackIds.append(rec->id());
+		mTracks[rec->id()] = rec;
+		rec->mFill = noFileState;
+	}
+
+	endResetModel();
+
+	impDb.close();
 }
 
 bool TracksModel::checkChanges()
@@ -741,7 +950,7 @@ void TracksModel::selectRecord(const QModelIndex &index)
 	mSelectedTrack = newrec;
 }
 
-int TracksModel::insertTrack()
+int TracksModel::insertTrack(Record* rec)
 {
 	QSqlDatabase db = QSqlDatabase::database();
 
@@ -750,30 +959,30 @@ int TracksModel::insertTrack()
 		"INSERT INTO track (title, artist, album, main, minus, lastchange) "
 		"VALUES (:title, :artist, :album, :main, :minus, :lc)");
 
-	qAddTrack.bindValue(":title", mSelectedTrack->title);
-	qAddTrack.bindValue(":artist", mSelectedTrack->artist);
-	qAddTrack.bindValue(":album", mSelectedTrack->album);
-	if (mSelectedTrack->prime().isEmpty())
+	qAddTrack.bindValue(":title", rec->title);
+	qAddTrack.bindValue(":artist", rec->artist);
+	qAddTrack.bindValue(":album", rec->album);
+	if (rec->prime().isEmpty())
 		qAddTrack.bindValue(":main", QVariant());
 	else
-		qAddTrack.bindValue(":main", mFileIds.value(mSelectedTrack->prime(), 0));
-	if (mSelectedTrack->prime().isEmpty())
+		qAddTrack.bindValue(":main", mFileIds.value(rec->prime(), 0));
+	if (rec->prime().isEmpty())
 		qAddTrack.bindValue(":minus", QVariant());
 	else
-		qAddTrack.bindValue(":minus", mFileIds.value(mSelectedTrack->minus(), 0));
-	qAddTrack.bindValue(":lc", mSelectedTrack->lastChanged.toString());
+		qAddTrack.bindValue(":minus", mFileIds.value(rec->minus(), 0));
+	qAddTrack.bindValue(":lc", rec->lastChanged.toString("yyyy:MM:dd HH:mm:ss:zzz"));
 	qAddTrack.exec();
 
 	int id = qAddTrack.lastInsertId().toInt();
 
 	QSqlQuery qAddTag(db);
 	qAddTag.prepare("INSERT INTO tracktag (track, tag) VALUES (:track, :tag)");
-	foreach(QString tag, mSelectedTrack->mTags) {
+	foreach(QString tag, rec->mTags) {
 		qAddTag.bindValue(":track", id);
 		qAddTag.bindValue(":tag", mTags.value(tag)->id());
 		qAddTag.exec();
 	}
-	foreach(QStringList cats, mSelectedTrack->mCategories) {
+	foreach(QStringList cats, rec->mCategories) {
 		foreach(QString cat, cats) {
 			qAddTag.bindValue(":track", id);
 			qAddTag.bindValue(":tag", mTags.value(cat)->id());
@@ -785,16 +994,16 @@ int TracksModel::insertTrack()
 	qAddProp.prepare(
 		"INSERT INTO trackproperty (track, property, value) "
 		"VALUES (:track, :prop, :value)");
-	foreach(QString prop, mSelectedTrack->mProperties.keys()) {
+	foreach(QString prop, rec->mProperties.keys()) {
 		qAddProp.bindValue(":track", id);
 		qAddProp.bindValue(":prop", mProperties.value(prop)->id());
-		qAddProp.bindValue(":value", mSelectedTrack->mProperties[prop]);
+		qAddProp.bindValue(":value", rec->mProperties[prop]);
 		qAddProp.exec();
 	}
 
 	QSqlQuery qSetFile(db);
 	qSetFile.prepare("UPDATE file SET track=:track WHERE id=:id");
-	foreach(QString file, mSelectedTrack->files()) {
+	foreach(QString file, rec->files()) {
 		int fid = mFileIds[file];
 		qSetFile.bindValue(":track", id);
 		qSetFile.bindValue(":id", fid);
@@ -832,7 +1041,7 @@ void TracksModel::updateTrack(Record *rec, Record* origin)
 			qUpdTrack.bindValue(":minus", QVariant());
 		else
 			qUpdTrack.bindValue(":minus", mFileIds.value(rec->minus(), 0));
-		qUpdTrack.bindValue(":lc", rec->lastChanged.toString());
+		qUpdTrack.bindValue(":lc", rec->lastChanged.toString("yyyy:MM:dd HH:mm:ss:zzz"));
 		qUpdTrack.exec();
 	}
 
@@ -912,7 +1121,7 @@ void TracksModel::saveRecord()
 	mSelectedTrack->lastChanged = QDateTime::currentDateTime();
 	if (!origin) {
 		// this is a new record
-		int id = insertTrack();
+		int id = insertTrack(mSelectedTrack);
 		beginInsertRows(QModelIndex(), mTrackIds.size(), mTrackIds.size());
 		Record* newrec = new Record;
 		mTracks[id] = newrec;
@@ -930,7 +1139,7 @@ void TracksModel::saveRecord()
 	} else {
 		if (origin->id() < 0) {
 			// this is a new record with existing file
-			int id = insertTrack();
+			int id = insertTrack(mSelectedTrack);
 			mTracks.remove(origin->id());
 			Record* newrec = new Record;
 			mTracks[id] = newrec;
@@ -1038,7 +1247,7 @@ void TracksModel::playFile(const QString &file)
 		QSqlDatabase db = QSqlDatabase::database();
 		QSqlQuery qUpdFile(db);
 		qUpdFile.prepare("UPDATE files SET lastplayed=:lp WHERE id=:id");
-		qUpdFile.bindValue(":lp", f->lastPlayed.toString());
+		qUpdFile.bindValue(":lp", f->lastPlayed.toString("yyyy:MM:dd HH:mm:ss:zzz"));
 		qUpdFile.bindValue(":id", f->id());
 		qUpdFile.exec();
 	}

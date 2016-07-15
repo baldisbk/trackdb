@@ -100,7 +100,7 @@ signals:
 protected:
 	File* readFile(QString filename);
 
-	int insertTrack();
+	int insertTrack(Record *rec);
 	void updateTrack(Record* rec, Record *origin);
 
 	void fillFile(File *file);

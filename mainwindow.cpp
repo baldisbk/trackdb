@@ -403,12 +403,37 @@ void MainWindow::onSetStorage()
 
 void MainWindow::onImport()
 {
-	// TODO
+	QString fileTo = QFileDialog::getOpenFileName(
+		this, tr("Select import file"), mLastExpImpPath);
+	if (fileTo.isEmpty())
+		return;
+	mLastExpImpPath = QDir(fileTo).absolutePath();
+	mTracks->importDB(fileTo);
 }
 
 void MainWindow::onExport()
 {
-	// TODO
+	QString fileTo = QFileDialog::getSaveFileName(
+		this, tr("Select export file"), mLastExpImpPath);
+	if (fileTo.isEmpty())
+		return;
+	if (QFile::exists(fileTo))
+		if (!QFile::remove(fileTo)) {
+			QMessageBox::critical(
+				this, tr("Cthulhu fhtagn"),
+				tr("File exists and cannot be overwritten"));
+			return;
+		}
+	if (!QFile::copy("database.sqlite", fileTo)) {
+		QMessageBox::critical(
+			this, tr("Cthulhu fhtagn"),
+			tr("Cannot create file"));
+		return;
+	}
+	QMessageBox::information(
+		this, tr("Live long and prosper"),
+		tr("Database was successfully exported"));
+	mLastExpImpPath = QDir(fileTo).absolutePath();
 }
 
 void MainWindow::onPrint()
