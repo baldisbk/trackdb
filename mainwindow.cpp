@@ -100,7 +100,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->moveFileButton, SIGNAL(clicked(bool)), this, SLOT(onMoveFile()));
 	connect(ui->autoFileButton, SIGNAL(clicked(bool)), this, SLOT(onAutoFile()));
 	// no logic yet
-	ui->deleteFileButton->setVisible(false);
 	ui->moveFileButton->setVisible(false);
 
 	ui->filesView->setModel(mFiles);
@@ -356,7 +355,11 @@ void MainWindow::onDeleteFile()
 {
 	if (!mSelected)
 		return;
-	// TODO
+	QString file = mFiles->fileForIndex(
+		ui->filesView->currentIndex());
+	if (file.isEmpty())
+		return;
+	mTracks->removeFile(file);
 }
 
 void MainWindow::onAutoFile()

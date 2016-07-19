@@ -35,6 +35,7 @@ public:
 
 public slots:
 	void setRecord(Record* rec);
+	void updateRecord();
 
 private:
 	TracksModel* mDatabase;

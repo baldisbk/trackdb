@@ -9,6 +9,7 @@ FilesModel::FilesModel(TracksModel *database, QObject *parent):
 {
 	connect(mDatabase, SIGNAL(recordSelected(Record*)),
 		this, SLOT(setRecord(Record*)));
+	connect(mDatabase, SIGNAL(recordChanged()), this, SLOT(updateRecord()));
 }
 
 QModelIndex FilesModel::index(int row, int column, const QModelIndex &parent) const
@@ -100,6 +101,11 @@ void FilesModel::setRecord(Record *rec)
 	beginResetModel();
 	mRecord = rec;
 	endResetModel();
+}
+
+void FilesModel::updateRecord()
+{
+	setRecord(mRecord);
 }
 
 QVariant FilesModel::headerData(int section, Qt::Orientation orientation, int role) const
