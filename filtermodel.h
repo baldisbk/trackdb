@@ -5,13 +5,15 @@
 
 #include "database.h"
 
+class TracksModel;
+
 class FilterModel : public QSortFilterProxyModel
 {
 	Q_OBJECT
 public:
-	FilterModel(QObject* parent = NULL);
+	FilterModel(TracksModel* db, QObject* parent = NULL);
 
-	void setFilter(int column, QString value);
+	void setFilter(QString prop, QString value);
 	void setStateFilter(FillState state, bool on);
 
 protected:
@@ -19,7 +21,8 @@ protected:
 	virtual bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 
 private:
-	int mFilterColumn;
+	TracksModel* mDatabase;
+	QString mFilterProp;
 	QString mFilterValue;
 	QList<int> mEnabledStates;
 };

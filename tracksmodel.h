@@ -41,6 +41,7 @@ public:
 		int role = Qt::DisplayRole) const;
 
 	bool isValidIndex(const QModelIndex &index) const;
+	int columnForProperty(QString prop) const;
 
 	// database
 	Record* recordForIndex(const QModelIndex& index) const;

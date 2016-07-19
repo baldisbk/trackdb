@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	mFiles = new FilesModel(mTracks, this);
 	mProperties = new PropertyModel(mTracks, this);
 	mTags = new TagsModel(mTracks, this);
-	mFilter = new FilterModel(this);
+	mFilter = new FilterModel(mTracks, this);
 	mFilter->setSourceModel(mTracks);
 
 	mSettings = new SettingsDialog(mTracks, this);
@@ -264,24 +264,12 @@ void MainWindow::onFilterSelected()
 
 void MainWindow::onFilterChanged()
 {
-	int colNo = -1;
-	switch (ui->filterTypeComboBox->currentIndex()) {
-	case filterTitle: colNo = TracksModel::trackColumn; break;
-	case filterArtist: colNo = TracksModel::artistColumn; break;
-	case filterAlbum: colNo = TracksModel::albumColumn; break;
-	case filterTags: colNo = TracksModel::tagsColumn; break;
-	default:
-		colNo =
-			TracksModel::columnNumber +
-			ui->filterTypeComboBox->currentIndex() -
-			filterCustom;
-	}
 	QString filter =
 		ui->filterLineEdit->isVisible() ?
 		ui->filterLineEdit->text() :
 		ui->filterComboBox->currentText();
 
-	mFilter->setFilter(colNo, filter);
+	mFilter->setFilter(ui->filterTypeComboBox->currentText(), filter);
 }
 
 void MainWindow::onTrackSelected(QModelIndex index)

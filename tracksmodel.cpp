@@ -50,7 +50,7 @@ QVariant TracksModel::headerData(int section, Qt::Orientation orientation, int r
 		return QVariant();
 	switch (section) {
 	case idColumn: return tr("#");
-	case trackColumn: return tr("Track");
+	case trackColumn: return tr("Title");
 	case artistColumn: return tr("Artist");
 	case albumColumn: return tr("Album");
 	case lastPlayedColumn: return tr("Last played");
@@ -71,7 +71,15 @@ bool TracksModel::isValidIndex(const QModelIndex &index) const
 {
 	return	!index.parent().isValid() &&
 		index.column() >= 0 && index.column() < columnCount() &&
-		index.row() >= 0 && index.row() < rowCount();
+			index.row() >= 0 && index.row() < rowCount();
+}
+
+int TracksModel::columnForProperty(QString prop) const
+{
+	for(int i = 0; i < columnCount(); ++i)
+		if (headerData(i, Qt::Horizontal) == prop)
+			return i;
+	return -1;
 }
 
 Record *TracksModel::recordForIndex(const QModelIndex &index) const

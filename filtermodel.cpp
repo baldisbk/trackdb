@@ -4,14 +4,14 @@
 
 #include <QDebug>
 
-FilterModel::FilterModel(QObject *parent):
-	QSortFilterProxyModel(parent), mFilterColumn(-1)
+FilterModel::FilterModel(TracksModel *db, QObject *parent):
+	QSortFilterProxyModel(parent), mDatabase(db)
 {
 }
 
-void FilterModel::setFilter(int column, QString value)
+void FilterModel::setFilter(QString prop, QString value)
 {
-	mFilterColumn = column;
+	mFilterProp = prop;
 	mFilterValue = value;
 	invalidateFilter();
 }
@@ -36,14 +36,32 @@ bool FilterModel::filterAcceptsRow(int source_row, const QModelIndex &source_par
 		return false;
 	else if (!mEnabledStates.contains(srcStateIndex.data(Qt::UserRole).toInt()))
 		return false;
-	if (mFilterColumn == -1 || mFilterValue.isEmpty())
+	if (mFilterProp.isEmpty() || mFilterValue.isEmpty())
 		return true;
-	QModelIndex src = sourceModel()->index(
-		source_row, mFilterColumn, source_parent);
-	if (!src.isValid())
-		return false;
-	else
-		return src.data().toString().contains(mFilterValue);
+
+	Record* rec = mDatabase->recordForIndex(
+		sourceModel()->index(source_row, TracksModel::idColumn, source_parent));
+	if (!rec)
+		return true;
+
+	Property* prop = mDatabase->propertyType(mFilterProp);
+	if (!prop) {
+		int column = mDatabase->columnForProperty(mFilterProp);
+		if (column == -1)
+			return true;
+		QModelIndex src = sourceModel()->index(
+			source_row, column, source_parent);
+		if (!src.isValid())
+			return false;
+		else
+			return src.data().toString().contains(mFilterValue);
+	}
+	QVariant value = rec->property(mFilterProp);
+	if (value.type() == QVariant::String)
+		return value.toString().contains(mFilterValue);
+	if (value.type() == QVariant::StringList)
+		return value.toStringList().contains(mFilterValue);
+	return false;
 }
 
 bool FilterModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
