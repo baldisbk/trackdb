@@ -531,6 +531,14 @@ void TracksModel::loadDB()
 		"	filename, track, lastplayed, main, minus "
 		"FROM file "
 		"LEFT JOIN track ON track.id=file.track");
+
+	QSqlQuery qDeleteFile(db);
+	qDeleteFile.prepare("DELETE FROM file WHERE id=:id");
+	QSqlQuery qDeleteFromMain(db);
+	qDeleteFromMain.prepare("UPDATE track SET main=0 WHERE main=:id");
+	QSqlQuery qDeleteFromMinus(db);
+	qDeleteFromMinus.prepare("UPDATE track SET minus=0 WHERE minus=:id");
+
 	while(qSelectFiles.next()) {
 		File* file = new File;
 		file->mId = qSelectFiles.value(0).toInt();
@@ -546,6 +554,18 @@ void TracksModel::loadDB()
 			fillFile(file);
 
 		Record* rec = mTracks.value(file->track(), NULL);
+		if (!QFile::exists(file->filename)) {
+			if (rec)
+				rec->removeFile(file);
+			qDeleteFromMain.bindValue(":id", file->id());
+			qDeleteFromMain.exec();
+			qDeleteFromMinus.bindValue(":id", file->id());
+			qDeleteFromMinus.exec();
+			qDeleteFile.bindValue(":id", file->id());
+			qDeleteFile.exec();
+			delete file;
+			continue;
+		}
 		if (!rec) {
 			bool found = false;
 			foreach(Record* rec, mTracks) {
