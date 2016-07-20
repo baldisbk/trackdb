@@ -283,11 +283,9 @@ QString TracksModel::printHtml(QString property) const
 		return res;
 	}
 	res += "<table cellspacing=0 cellpadding=2 border=1>";
-	res += "<tr>";
-	res += "<td>";
-	res += "Header";
-	res += "</td>";
-	res += "</tr>";
+	res += QString("<tr><td>Title</td><td>%1</td></tr>").arg(mSelectedTrack->title);
+	res += QString("<tr><td>Artist</td><td>%1</td></tr>").arg(mSelectedTrack->artist);
+	res += QString("<tr><td>Album</td><td>%1</td></tr>").arg(mSelectedTrack->album);
 	foreach (Property* prop, mProperties) {
 		if (prop->type == Property::Big) continue;
 		QVariant val = mSelectedTrack->property(prop->name);
